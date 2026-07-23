@@ -105,6 +105,8 @@ final class CreateCommand extends Command
         $fieldLines = [];
         $columnImports = ['use XaviWorks\\ModularSchemaUi\\Tables\\Table;'];
         $columnLines = [];
+        $filterImports = [];
+        $filterLines = [];
 
         foreach ($columns as $column) {
             $type = Schema::getColumnType($table, $column);
@@ -124,19 +126,22 @@ final class CreateCommand extends Command
             $columnType = $type === 'boolean' ? 'BooleanColumn' : 'TextColumn';
             $columnImports[] = "use XaviWorks\\ModularSchemaUi\\Tables\\Columns\\{$columnType};";
             $columnLines[] = "            {$columnType}::make({$column})->sortable()->searchable(),";
+            $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\TextFilter;';
+            $filterLines[] = "            TextFilter::make({$column}),";
         }
 
         $fieldImports = array_values(array_unique($fieldImports));
         $columnImports = array_values(array_unique($columnImports));
+        $filterImports = array_values(array_unique($filterImports));
 
         return "<?php\n\nnamespace App\\Modular\\".Str::pluralStudly(str_replace('Schema', '', $schemaClass)).";\n\n".
-            implode("\n", $fieldImports)."\n".implode("\n", $columnImports)."\n".
+            implode("\n", $fieldImports)."\n".implode("\n", $columnImports)."\n".implode("\n", $filterImports)."\n".
             "use XaviWorks\\ModularSchemaUi\\Resources\\ResourceSchema;\n\n".
             "final class {$schemaClass} extends ResourceSchema\n{\n".
             "    public function form(Form \$form): Form\n    {\n        return \$form->fields([\n".
             implode("\n", $fieldLines)."\n        ]);\n    }\n\n".
             "    public function table(Table \$table): Table\n    {\n        return \$table->columns([\n".
-            implode("\n", $columnLines)."\n        ]);\n    }\n}\n";
+            implode("\n", $columnLines)."\n        ])->filters([\n".implode("\n", $filterLines)."\n        ]);\n    }\n}\n";
     }
 
     /** @param list<string> $imports */
