@@ -1,6 +1,6 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "xaviworks/modular-schema-ui",
+    "name": "xaviworks/laravel-modular-schema-ui",
     "description": "A frontend-neutral modular schema-driven UI toolkit for Laravel with optional Blade, React, Vue, and Livewire adapters.",
     "type": "library",
     "license": "MIT",

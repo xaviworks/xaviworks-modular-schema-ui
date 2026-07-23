@@ -6,7 +6,7 @@ filters, validation, and frontend adapters.
 ## Installation
 
 ```bash
-composer require xaviworks/modular-schema-ui
+composer require xaviworks/laravel-modular-schema-ui
 php artisan modular:install --frontend=react
 ```
 

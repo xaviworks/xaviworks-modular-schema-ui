@@ -19,7 +19,7 @@ adapters for React, Vue, and Livewire.
 Install the package:
 
 ```bash
-composer require xaviworks/modular-schema-ui
+composer require xaviworks/laravel-modular-schema-ui
 php artisan modular:install --frontend=react
 ```
 
