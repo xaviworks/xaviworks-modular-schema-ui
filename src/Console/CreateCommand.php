@@ -72,6 +72,9 @@ final class CreateCommand extends Command
             base_path('routes/modular.php') => $this->routeCode($controllerClass, $resourceSlug),
         ];
 
+        $controllerPath = app_path("Http/Controllers/{$controllerClass}.php");
+        $filesToWrite[$controllerPath] = $this->addValidationToController($filesToWrite[$controllerPath], $schemaClass);
+
         if ($frontend === 'react') {
             $filesToWrite[resource_path("js/pages/{$resourceSlug}/index.tsx")] = $this->reactIndexCode($resource);
             $filesToWrite[resource_path("js/pages/{$resourceSlug}/create.tsx")] = $this->reactFormPageCode($resource, 'create');
@@ -116,7 +119,7 @@ final class CreateCommand extends Command
                 continue;
             }
 
-            $field = $this->fieldExpression($columnName, $type, $fieldImports);
+            $field = $this->fieldExpression($table, $columnName, $type, $fieldImports);
             $fieldLines[] = "            {$field},";
 
             if ($this->isSensitiveColumn($columnName)) {
@@ -153,7 +156,7 @@ final class CreateCommand extends Command
     }
 
     /** @param list<string> $imports */
-    private function fieldExpression(string $column, string $type, array &$imports): string
+    private function fieldExpression(string $table, string $column, string $type, array &$imports): string
     {
         $class = match ($type) {
             'text', 'mediumText', 'longText' => 'Textarea',
@@ -170,7 +173,32 @@ final class CreateCommand extends Command
             $expression .= "->options([1 => 'Yes', 0 => 'No'])";
         }
 
+        if (! $this->isNullableColumn($table, $column)) {
+            $expression .= '->required()';
+        }
+
+        $length = $this->columnLength($table, $column);
+
+        if ($length !== null) {
+            $expression .= "->maxLength({$length})";
+        }
+
+        if ($class === 'Password') {
+            $expression .= '->minLength(8)';
+        }
+
         return $expression;
+    }
+
+    private function columnLength(string $table, string $column): ?int
+    {
+        foreach (Schema::getColumns($table) as $details) {
+            if (($details['name'] ?? null) === $column && is_int($details['length'] ?? null)) {
+                return $details['length'];
+            }
+        }
+
+        return null;
     }
 
     private function isSensitiveColumn(string $column): bool
@@ -206,6 +234,25 @@ final class CreateCommand extends Command
     private function routeCode(string $controllerClass, string $resourceSlug): string
     {
         return "<?php\n\nuse App\\Http\\Controllers\\{$controllerClass};\nuse Illuminate\\Support\\Facades\\Route;\n\nRoute::resource('{$resourceSlug}', {$controllerClass}::class)->except(['show']);\n";
+    }
+
+    private function addValidationToController(string $source, string $schemaClass): string
+    {
+        $source = preg_replace_callback(
+            '/(?<indent>\s+)(?<model>[A-Za-z0-9_]+)::query\(\)->create\(\$request->only\((?<columns>.*?)\)\);/s',
+            fn (array $match): string => $match['indent']
+                .'$validated = $request->validate((new '.$schemaClass.')->validationRules());'."\n"
+                .$match['indent'].$match['model'].'::query()->create($validated);',
+            $source,
+        ) ?? $source;
+
+        return preg_replace_callback(
+            '/(?<indent>\s+)\$(?<model>[A-Za-z0-9_]+)->update\(\$request->only\((?<columns>.*?)\)\);/s',
+            fn (array $match): string => $match['indent']
+                .'$validated = $request->validate((new '.$schemaClass.')->validationRules());'."\n"
+                .$match['indent'].'$'.$match['model'].'->update($validated);',
+            $source,
+        ) ?? $source;
     }
 
     private function reactIndexCode(string $resource): string

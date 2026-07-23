@@ -2,6 +2,7 @@
 
 namespace XaviWorks\ModularSchemaUi\Tests\Feature;
 
+use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Form;
 use XaviWorks\ModularSchemaUi\Support\SchemaPayload;
@@ -28,6 +29,18 @@ final class PackageSmokeTest extends TestCase
         $this->assertSame('text', $payload['fields'][0]['type']);
         $this->assertTrue($payload['fields'][0]['required']);
         $this->assertSame('Junn', $payload['values']['name']);
+    }
+
+    public function test_form_schema_exposes_validation_rules(): void
+    {
+        $form = Form::make()->fields([
+            Text::make('name')->required()->maxLength(256),
+            Email::make('email'),
+        ]);
+
+        $this->assertSame(['required', 'max:256'], $form->validationRules()['name']);
+        $this->assertSame(['email'], $form->validationRules()['email']);
+        $this->assertSame(['required', 'max:256'], $form->toArray()['fields'][0]['rules']);
     }
 
     public function test_table_schema_contains_frontend_neutral_records(): void

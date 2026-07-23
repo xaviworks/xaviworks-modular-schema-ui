@@ -66,6 +66,16 @@ final class Form
         return $this->fields;
     }
 
+    /** @return array<string, list<string>> */
+    public function validationRules(): array
+    {
+        return $this->fields
+            ->filter(fn (FieldContract $field): bool => method_exists($field, 'validationRules'))
+            ->mapWithKeys(fn (FieldContract $field): array => [$field->name() => $field->validationRules()])
+            ->filter(fn (array $rules): bool => $rules !== [])
+            ->all();
+    }
+
     /** @return array<string, mixed> */
     public function toArray(): array
     {

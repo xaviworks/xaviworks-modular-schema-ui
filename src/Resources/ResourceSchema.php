@@ -31,6 +31,12 @@ abstract class ResourceSchema
         return $this->resolveForm()->toArray();
     }
 
+    /** @return array<string, list<string>> */
+    public function validationRules(): array
+    {
+        return $this->resolveForm()->validationRules();
+    }
+
     public function resolveTable(Builder $query, RequestState $state): Table
     {
         $table = $this->table(Table::make());

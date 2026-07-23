@@ -40,12 +40,28 @@ final class UserSchema extends ResourceSchema
     public function form(Form $form): Form
     {
         return $form->fields([
-            Text::make('name')->required(),
+            Text::make('name')->required()->maxLength(256),
             Email::make('email')->required(),
         ]);
     }
 }
 ```
+
+Validation is declared beside each modular field. Use `required()`,
+`maxLength()`, `minLength()`, `nullable()`, or `rules()` for additional
+Laravel validation rules:
+
+```php
+Text::make('name')->required()->maxLength(256),
+Email::make('email')->required(),
+Password::make('password')->required()->minLength(8),
+Text::make('nickname')->nullable()->rules(['string', 'max:80']),
+```
+
+The schema exposes the complete rule map through `validationRules()`. A
+resource created with `php artisan modular:create` uses that map in its
+generated `store` and `update` actions. React/Inertia forms also display the
+validation errors returned by Laravel.
 
 ## Use it with React/Inertia
 

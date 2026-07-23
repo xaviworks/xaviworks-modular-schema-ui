@@ -20,6 +20,11 @@ abstract class Field implements FieldContract
 
     protected bool $disabled = false;
 
+    protected bool $nullable = false;
+
+    /** @var list<string> */
+    protected array $rules = [];
+
     /** @var array<string, mixed> */
     protected array $attributes = [];
 
@@ -78,6 +83,34 @@ abstract class Field implements FieldContract
     public function disabled(bool $disabled = true): static
     {
         $this->disabled = $disabled;
+
+        return $this;
+    }
+
+    public function nullable(bool $nullable = true): static
+    {
+        $this->nullable = $nullable;
+
+        return $this;
+    }
+
+    public function maxLength(int $length): static
+    {
+        return $this->rules(["max:{$length}"]);
+    }
+
+    public function minLength(int $length): static
+    {
+        return $this->rules(["min:{$length}"]);
+    }
+
+    /** @param string|list<string> $rules */
+    public function rules(string|array $rules): static
+    {
+        $this->rules = array_values(array_unique([
+            ...$this->rules,
+            ...(is_array($rules) ? $rules : [$rules]),
+        ]));
 
         return $this;
     }
@@ -147,6 +180,24 @@ abstract class Field implements FieldContract
         return $this->attributes;
     }
 
+    /** @return list<string> */
+    public function validationRules(): array
+    {
+        $rules = $this->rules;
+
+        if ($this->required && ! in_array('required', $rules, true)) {
+            array_unshift($rules, 'required');
+        } elseif ($this->nullable && ! in_array('nullable', $rules, true)) {
+            array_unshift($rules, 'nullable');
+        }
+
+        if ($this->type() === 'email' && ! in_array('email', $rules, true)) {
+            $rules[] = 'email';
+        }
+
+        return array_values(array_unique($rules));
+    }
+
     /** @return array<string, mixed> */
     public function toArray(): array
     {
@@ -162,6 +213,7 @@ abstract class Field implements FieldContract
             'disabled' => $this->isDisabled(),
             'attributes' => $this->htmlAttributes(),
             'options' => $this->optionValues(),
+            'rules' => $this->validationRules(),
         ];
     }
 }
