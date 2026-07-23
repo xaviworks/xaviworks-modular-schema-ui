@@ -41,7 +41,7 @@ abstract class ResourceSchema
             $table->getPerPageOptions(),
         );
 
-        return $table->paginate($paginator);
+        return $table->state($state)->paginate($paginator);
     }
 
     /** @return array<string, mixed> */

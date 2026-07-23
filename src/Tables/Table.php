@@ -6,6 +6,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
+use XaviWorks\ModularSchemaUi\State\RequestState;
 
 final class Table
 {
@@ -21,6 +22,8 @@ final class Table
     private string $emptyMessage = 'No records found.';
 
     private ?LengthAwarePaginator $paginator = null;
+
+    private ?RequestState $state = null;
 
     /** @var list<int> */
     private array $perPageOptions = [10, 25, 50];
@@ -57,6 +60,13 @@ final class Table
     {
         $this->paginator = $paginator;
         $this->records = collect($paginator->items());
+
+        return $this;
+    }
+
+    public function state(RequestState $state): self
+    {
+        $this->state = $state;
 
         return $this;
     }
@@ -102,6 +112,11 @@ final class Table
     public function getPaginator(): ?LengthAwarePaginator
     {
         return $this->paginator;
+    }
+
+    public function getState(): ?RequestState
+    {
+        return $this->state;
     }
 
     /** @return list<int> */
@@ -194,6 +209,15 @@ final class Table
             'records' => $records,
             'emptyMessage' => $this->emptyStateMessage(),
             'perPageOptions' => $this->getPerPageOptions(),
+            'controls' => [
+                'searchable' => $this->searchableColumnNames() !== [],
+                'search' => $this->state?->search(),
+                'sort' => $this->state?->sort(),
+                'direction' => $this->state?->direction() ?? 'asc',
+                'filters' => $this->filters->mapWithKeys(fn (FilterContract $filter): array => [
+                    $filter->name() => $this->state?->filters()[$filter->name()] ?? null,
+                ])->all(),
+            ],
             'pagination' => $paginator ? [
                 'currentPage' => $paginator->currentPage(),
                 'lastPage' => $paginator->lastPage(),
