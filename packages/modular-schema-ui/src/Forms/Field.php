@@ -60,6 +60,17 @@ abstract class Field implements FieldContract
         return $this->required;
     }
 
+    /** @return array<string|int, mixed> */
+    public function optionValues(): array
+    {
+        return [];
+    }
+
+    public function canRestoreValue(): bool
+    {
+        return true;
+    }
+
     /** @return array<string, mixed> */
     public function htmlAttributes(): array
     {

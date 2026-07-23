@@ -10,6 +10,11 @@ interface Field
 
     public function type(): string;
 
+    /** @return array<string|int, mixed> */
+    public function optionValues(): array;
+
+    public function canRestoreValue(): bool;
+
     public function isRequired(): bool;
 
     /** @return array<string, mixed> */
