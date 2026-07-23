@@ -25,6 +25,12 @@ abstract class ResourceSchema
         return $this->form(Form::make());
     }
 
+    /** @return array<string, mixed> */
+    public function formPayload(): array
+    {
+        return $this->resolveForm()->toArray();
+    }
+
     public function resolveTable(Builder $query, RequestState $state): Table
     {
         $table = $this->table(Table::make());
@@ -36,5 +42,11 @@ abstract class ResourceSchema
         );
 
         return $table->paginate($paginator);
+    }
+
+    /** @return array<string, mixed> */
+    public function tablePayload(Builder $query, RequestState $state): array
+    {
+        return $this->resolveTable($query, $state)->toArray();
     }
 }

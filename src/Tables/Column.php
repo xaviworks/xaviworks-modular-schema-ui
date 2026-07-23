@@ -68,8 +68,25 @@ abstract class Column implements ColumnContract
         return data_get($record, $this->name);
     }
 
+    public function valueFor(mixed $record): mixed
+    {
+        return $this->valueFrom($record);
+    }
+
     public function displayValue(mixed $record): string
     {
         return (string) ($this->valueFrom($record) ?? '');
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name(),
+            'label' => $this->labelText(),
+            'type' => $this->type(),
+            'sortable' => $this->isSortable(),
+            'searchable' => $this->isSearchable(),
+        ];
     }
 }

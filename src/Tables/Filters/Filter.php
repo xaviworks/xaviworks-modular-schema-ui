@@ -40,4 +40,15 @@ abstract class Filter implements FilterContract
     {
         return [];
     }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name(),
+            'label' => $this->labelText(),
+            'type' => $this->type(),
+            'options' => $this->optionValues(),
+        ];
+    }
 }

@@ -149,4 +149,61 @@ final class Table
     {
         return $this->emptyMessage;
     }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        $records = $this->records->map(function (mixed $record): array {
+            $values = [];
+
+            foreach ($this->columns as $column) {
+                $values[$column->name()] = method_exists($column, 'valueFor')
+                    ? $column->valueFor($record)
+                    : data_get($record, $column->name());
+            }
+
+            return $values;
+        })->values()->all();
+
+        $paginator = $this->paginator;
+
+        return [
+            'columns' => $this->columns
+                ->map(fn (ColumnContract $column): array => method_exists($column, 'toArray')
+                    ? $column->toArray()
+                    : [
+                        'name' => $column->name(),
+                        'label' => $column->labelText(),
+                        'type' => $column->type(),
+                        'sortable' => $column->isSortable(),
+                        'searchable' => $column->isSearchable(),
+                    ])
+                ->values()
+                ->all(),
+            'filters' => $this->filters
+                ->map(fn (FilterContract $filter): array => method_exists($filter, 'toArray')
+                    ? $filter->toArray()
+                    : [
+                        'name' => $filter->name(),
+                        'label' => $filter->labelText(),
+                        'type' => $filter->type(),
+                        'options' => $filter->optionValues(),
+                    ])
+                ->values()
+                ->all(),
+            'records' => $records,
+            'emptyMessage' => $this->emptyStateMessage(),
+            'perPageOptions' => $this->getPerPageOptions(),
+            'pagination' => $paginator ? [
+                'currentPage' => $paginator->currentPage(),
+                'lastPage' => $paginator->lastPage(),
+                'perPage' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'from' => $paginator->firstItem(),
+                'to' => $paginator->lastItem(),
+                'prevUrl' => $paginator->previousPageUrl(),
+                'nextUrl' => $paginator->nextPageUrl(),
+            ] : null,
+        ];
+    }
 }

@@ -1,6 +1,11 @@
 # XaviWorks Modular Schema UI
 
-An installable, Blade-first Laravel package for modular forms, tables, search, filters, sorting, and pagination.
+An installable Laravel package for modular forms, tables, search, filters, sorting, and pagination.
+
+The modular definitions are frontend-neutral. Blade is included as the first
+adapter, while React, Vue, Livewire, or another starter kit can consume the
+same definitions through `Form::toArray()`, `Table::toArray()`, or the
+`SchemaPayload` helper.
 
 The Laravel application used for examples and integration checks lives in `workbench/`.
 

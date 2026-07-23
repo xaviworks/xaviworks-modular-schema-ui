@@ -65,4 +65,34 @@ final class Form
     {
         return $this->fields;
     }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        $values = [];
+
+        foreach ($this->fields as $field) {
+            $values[$field->name()] = $this->valueFor($field);
+        }
+
+        return [
+            'fields' => $this->fields
+                ->map(fn (FieldContract $field): array => method_exists($field, 'toArray')
+                    ? $field->toArray()
+                    : [
+                        'name' => $field->name(),
+                        'label' => $field->labelText(),
+                        'type' => $field->type(),
+                        'required' => $field->isRequired(),
+                        'placeholder' => $field->placeholderText(),
+                        'help' => $field->helpTextValue(),
+                        'readonly' => $field->isReadonly(),
+                        'disabled' => $field->isDisabled(),
+                        'options' => $field->optionValues(),
+                    ])
+                ->values()
+                ->all(),
+            'values' => $values,
+        ];
+    }
 }

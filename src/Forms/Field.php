@@ -146,4 +146,22 @@ abstract class Field implements FieldContract
     {
         return $this->attributes;
     }
+
+    /** @return array<string, mixed> */
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name(),
+            'label' => $this->labelText(),
+            'type' => $this->type(),
+            'required' => $this->isRequired(),
+            'default' => $this->canRestoreValue() ? $this->defaultValue() : null,
+            'placeholder' => $this->placeholderText(),
+            'help' => $this->helpTextValue(),
+            'readonly' => $this->isReadonly(),
+            'disabled' => $this->isDisabled(),
+            'attributes' => $this->htmlAttributes(),
+            'options' => $this->optionValues(),
+        ];
+    }
 }
