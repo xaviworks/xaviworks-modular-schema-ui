@@ -34,4 +34,10 @@ abstract class Filter implements FilterContract
     {
         return $this->label;
     }
+
+    /** @return array<string|int, mixed> */
+    public function optionValues(): array
+    {
+        return [];
+    }
 }

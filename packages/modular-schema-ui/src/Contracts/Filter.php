@@ -10,5 +10,10 @@ interface Filter
 
     public function labelText(): string;
 
+    public function type(): string;
+
+    /** @return array<string|int, mixed> */
+    public function optionValues(): array;
+
     public function apply(Builder $query, mixed $value): Builder;
 }

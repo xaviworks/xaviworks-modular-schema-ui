@@ -1,1 +1,1 @@
-<x-modular-schema-ui::table :table="$table" />
+<x-modular-schema-ui::table :table="$table" :state="$state ?? null" />

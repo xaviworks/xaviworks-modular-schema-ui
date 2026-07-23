@@ -239,3 +239,26 @@ it('applies only allowlisted modular filters to a query', function (): void {
         ->and($query->toSql())->toContain('"active" = ?')
         ->and($query->getBindings())->toBe(['admin', true]);
 });
+
+it('renders modular search and filter controls with active state', function (): void {
+    $table = Table::make()
+        ->filters([
+            SelectFilter::make('role')->options(['admin' => 'Administrator']),
+        ])
+        ->columns([
+            TextColumn::make('name')->searchable(),
+        ]);
+
+    $state = RequestState::from([
+        'search' => 'Junn',
+        'filters' => ['role' => 'admin'],
+    ], [], $table->filterNames());
+
+    $this->view('modular-table-test', compact('table', 'state'))
+        ->assertSee('method="GET"', false)
+        ->assertSee('name="search"', false)
+        ->assertSee('value="Junn"', false)
+        ->assertSee('name="filters[role]"', false)
+        ->assertSee('value="admin"', false)
+        ->assertSee('>Reset</a>', false);
+});

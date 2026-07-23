@@ -27,4 +27,15 @@ final class SelectFilter extends Filter
 
         return $query->where($this->name, (string) $value);
     }
+
+    public function type(): string
+    {
+        return 'select';
+    }
+
+    /** @return array<string|int, mixed> */
+    public function optionValues(): array
+    {
+        return $this->options;
+    }
 }

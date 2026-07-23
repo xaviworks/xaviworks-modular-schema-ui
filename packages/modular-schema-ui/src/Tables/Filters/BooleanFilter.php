@@ -6,6 +6,17 @@ use Illuminate\Database\Query\Builder;
 
 final class BooleanFilter extends Filter
 {
+    public function type(): string
+    {
+        return 'boolean';
+    }
+
+    /** @return array<int, string> */
+    public function optionValues(): array
+    {
+        return [1 => 'Yes', 0 => 'No'];
+    }
+
     public function apply(Builder $query, mixed $value): Builder
     {
         $normalized = match (strtolower((string) $value)) {
