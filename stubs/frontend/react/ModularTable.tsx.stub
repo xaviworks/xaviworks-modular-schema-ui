@@ -79,7 +79,7 @@ export function ModularTable({ table }: { table: Table }) {
                 {table.controls.searchable && (
                     <label className="relative min-w-0 flex-1 text-sm font-medium">
                         <span className="sr-only">Search</span>
-                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">⌕</span>
+                        <span className="modular-search-icon pointer-events-none absolute inset-y-0 left-3 flex items-center">⌕</span>
                         <input
                             name="search"
                             type="search"
@@ -126,7 +126,7 @@ export function ModularTable({ table }: { table: Table }) {
                             <tr>
                                 {table.columns.map((column) => (
                                     <th key={column.name} className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">
-                                        {column.sortable ? <button type="button" onClick={() => sort(column)} className="hover:text-gray-900 dark:hover:text-white">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}
+                                        {column.sortable ? <button type="button" onClick={() => sort(column)} className="modular-sort-button">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}
                                     </th>
                                 ))}
                             </tr>
