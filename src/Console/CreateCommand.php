@@ -109,20 +109,21 @@ final class CreateCommand extends Command
         $filterLines = [];
 
         foreach ($columns as $column) {
-            $type = Schema::getColumnType($table, $column);
+            $columnName = $column;
+            $type = Schema::getColumnType($table, $columnName);
 
-            if ($this->isSensitiveColumn($column) && ! str_contains(strtolower($column), 'password')) {
+            if ($this->isSensitiveColumn($columnName) && ! str_contains(strtolower($columnName), 'password')) {
                 continue;
             }
 
-            $field = $this->fieldExpression($column, $type, $fieldImports);
+            $field = $this->fieldExpression($columnName, $type, $fieldImports);
             $fieldLines[] = "            {$field},";
 
-            if ($this->isSensitiveColumn($column)) {
+            if ($this->isSensitiveColumn($columnName)) {
                 continue;
             }
 
-            $column = var_export($column, true);
+            $column = var_export($columnName, true);
             $columnType = $type === 'boolean' ? 'BooleanColumn' : 'TextColumn';
             $columnImports[] = "use XaviWorks\\ModularSchemaUi\\Tables\\Columns\\{$columnType};";
             $columnLines[] = "            {$columnType}::make({$column})->sortable()->searchable(),";
@@ -131,7 +132,7 @@ final class CreateCommand extends Command
                 $filterLines[] = "            BooleanFilter::make({$column}),";
             }
 
-            if (str_ends_with(strtolower(trim($column, "'")), '_verified_at')) {
+            if ($this->isNullableColumn($table, $columnName)) {
                 $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\PresenceFilter;';
                 $filterLines[] = "            PresenceFilter::make({$column}),";
             }
@@ -179,6 +180,17 @@ final class CreateCommand extends Command
             || str_contains(strtolower($column), 'recovery')
             || str_contains(strtolower($column), 'token')
             || str_starts_with(strtolower($column), 'two_factor');
+    }
+
+    private function isNullableColumn(string $table, string $column): bool
+    {
+        foreach (Schema::getColumns($table) as $details) {
+            if (($details['name'] ?? null) === $column) {
+                return (bool) ($details['nullable'] ?? false);
+            }
+        }
+
+        return false;
     }
 
     /** @param list<string> $columns */
