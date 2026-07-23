@@ -145,7 +145,9 @@ final class CreateCommand extends Command
         $class = match ($type) {
             'text', 'mediumText', 'longText' => 'Textarea',
             'boolean' => 'Select',
-            default => str_contains(strtolower($column), 'email') ? 'Email' : (str_contains(strtolower($column), 'password') ? 'Password' : 'Text'),
+            default => in_array($type, ['date', 'datetime', 'datetimetz', 'timestamp'], true)
+                ? 'Text'
+                : (str_contains(strtolower($column), 'email') ? 'Email' : (str_contains(strtolower($column), 'password') ? 'Password' : 'Text')),
         };
 
         $imports[] = "use XaviWorks\\ModularSchemaUi\\Forms\\Fields\\{$class};";
@@ -163,7 +165,8 @@ final class CreateCommand extends Command
         return str_contains(strtolower($column), 'password')
             || str_contains(strtolower($column), 'secret')
             || str_contains(strtolower($column), 'recovery')
-            || str_contains(strtolower($column), 'token');
+            || str_contains(strtolower($column), 'token')
+            || str_starts_with(strtolower($column), 'two_factor');
     }
 
     /** @param list<string> $columns */
