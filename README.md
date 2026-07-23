@@ -120,6 +120,9 @@ does not require React components to be used with the Blade adapter.
 <x-modular-schema-ui::form :form="$form" action="{{ route('users.store') }}" />
 ```
 
+For complete usage, generated resources, fields, filters, actions, validation,
+and frontend adapter examples, see [docs/USAGE.md](docs/USAGE.md).
+
 ## Package architecture
 
 ```text
