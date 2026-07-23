@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use XaviWorks\ModularSchemaUi\Console\CreateCommand;
 use XaviWorks\ModularSchemaUi\Console\InstallCommand;
 use XaviWorks\ModularSchemaUi\View\Components\Form;
 use XaviWorks\ModularSchemaUi\View\Components\Table;
@@ -13,7 +14,7 @@ final class ModularSchemaUiServiceProvider extends ServiceProvider
     public function register(): void
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([InstallCommand::class]);
+            $this->commands([CreateCommand::class, InstallCommand::class]);
         }
     }
 
