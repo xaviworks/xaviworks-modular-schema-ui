@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi\Tables\Filters;
 
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
 
+/** @phpstan-consistent-constructor */
 abstract class Filter implements FilterContract
 {
     protected string $label;

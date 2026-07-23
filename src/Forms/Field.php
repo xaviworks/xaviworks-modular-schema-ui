@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi\Forms;
 
 use XaviWorks\ModularSchemaUi\Contracts\Field as FieldContract;
 
+/** @phpstan-consistent-constructor */
 abstract class Field implements FieldContract
 {
     protected string $label;

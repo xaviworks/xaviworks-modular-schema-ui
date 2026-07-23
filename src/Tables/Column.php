@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi\Tables;
 
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
 
+/** @phpstan-consistent-constructor */
 abstract class Column implements ColumnContract
 {
     protected string $label;
