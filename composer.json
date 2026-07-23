@@ -1,9 +1,14 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "xaviworks/modular-schema-ui",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "A modular, Blade-first schema-driven UI toolkit for Laravel.",
+    "keywords": ["laravel", "schema", "ui", "forms", "tables", "xaviworks"],
+    "authors": [
+        {
+            "name": "Junn Xavier Adalid"
+        }
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",

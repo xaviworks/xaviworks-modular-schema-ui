@@ -1,3 +1,9 @@
+# Modular Schema UI
+
+Laravel application and development workbench for the XaviWorks schema-driven UI toolkit.
+
+Maintained by Junn Xavier Adalid under the XaviWorks developer name.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
