@@ -181,7 +181,7 @@ final class CreateCommand extends Command
 
     private function routeCode(string $controllerClass, string $resourceSlug): string
     {
-        return "<?php\n\nuse App\\Http\\Controllers\\{$controllerClass};\nuse Illuminate\\Support\\Facades\\Route;\n\nRoute::resource('{$resourceSlug}', {$controllerClass}::class);\n";
+        return "<?php\n\nuse App\\Http\\Controllers\\{$controllerClass};\nuse Illuminate\\Support\\Facades\\Route;\n\nRoute::resource('{$resourceSlug}', {$controllerClass}::class)->except(['show']);\n";
     }
 
     private function reactIndexCode(string $resource): string
