@@ -1,7 +1,7 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
     "name": "xaviworks/modular-schema-ui",
-    "description": "A modular, Blade-first schema-driven UI toolkit for Laravel.",
+    "description": "A frontend-neutral modular schema-driven UI toolkit for Laravel with optional Blade, React, Vue, and Livewire adapters.",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -39,6 +39,15 @@
                 "XaviWorks\\ModularSchemaUi\\ModularSchemaUiServiceProvider"
             ]
         }
+    },
+    "archive": {
+        "exclude": [
+            "/workbench/",
+            "/tests/",
+            "/phpunit.xml",
+            "/composer.lock",
+            "/.github/"
+        ]
     },
     "scripts": {
         "test": "phpunit",
