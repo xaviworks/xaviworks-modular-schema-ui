@@ -126,8 +126,10 @@ final class CreateCommand extends Command
             $columnType = $type === 'boolean' ? 'BooleanColumn' : 'TextColumn';
             $columnImports[] = "use XaviWorks\\ModularSchemaUi\\Tables\\Columns\\{$columnType};";
             $columnLines[] = "            {$columnType}::make({$column})->sortable()->searchable(),";
-            $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\TextFilter;';
-            $filterLines[] = "            TextFilter::make({$column}),";
+            if ($type === 'boolean') {
+                $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\BooleanFilter;';
+                $filterLines[] = "            BooleanFilter::make({$column}),";
+            }
         }
 
         $fieldImports = array_values(array_unique($fieldImports));
