@@ -37,12 +37,11 @@ export function ModularTable({ table }: { table: Table }) {
         updateTable({ sort: column.name, direction: table.controls.sort === column.name && table.controls.direction === 'asc' ? 'desc' : 'asc', search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination?.perPage });
     };
 
-    return <div className="space-y-4">
-        <form onSubmit={apply} className="flex flex-wrap items-end gap-3 rounded-md border border-gray-200 p-4 dark:border-gray-800">
+    return <div className="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+        <form onSubmit={apply} className="flex flex-wrap items-end gap-3">
             {table.controls.searchable && <label className="w-full max-w-md text-sm font-medium">Search<input name="search" type="search" defaultValue={table.controls.search ?? ''} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900" /></label>}
             {table.filters.map((filter) => <label key={filter.name} className="min-w-40 text-sm font-medium">{filter.label}{Object.keys(filter.options ?? {}).length > 0 ? <select name={`filters[${filter.name}]`} defaultValue={String(table.controls.filters[filter.name] ?? '')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900"><option value="">All</option>{Object.entries(filter.options ?? {}).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : <input name={`filters[${filter.name}]`} type="search" defaultValue={String(table.controls.filters[filter.name] ?? '')} placeholder={`Filter ${filter.label}`} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900" />}</label>)}
             <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">Apply</button>
-            <button type="button" onClick={() => updateTable({})} className="rounded-md border border-gray-300 px-4 py-2 text-sm dark:border-gray-700">Reset</button>
         </form>
 
         <div className="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-800"><table className="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-800">
