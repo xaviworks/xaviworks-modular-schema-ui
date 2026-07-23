@@ -42,4 +42,12 @@ final class PackageSmokeTest extends TestCase
         $this->assertTrue($payload['columns'][0]['sortable']);
         $this->assertSame('Modular UI', $payload['records'][0]['name']);
     }
+
+    public function test_install_command_can_select_a_react_adapter_without_writing_files(): void
+    {
+        $this->artisan('modular:install', [
+            '--frontend' => 'react',
+            '--dry-run' => true,
+        ])->expectsOutput('Selected Modular frontend: react')->assertSuccessful();
+    }
 }
