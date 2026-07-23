@@ -55,14 +55,20 @@ final class CreateCommand extends Command
             return self::FAILURE;
         }
 
+        $safeColumns = array_values(array_filter(
+            $columns,
+            fn (string $column): bool => ! $this->isSensitiveColumn($column)
+                || str_contains(strtolower($column), 'password'),
+        ));
+
         $resource = Str::pluralStudly($name);
         $resourceSlug = Str::kebab($resource);
         $schemaClass = "{$name}Schema";
         $controllerClass = "{$name}Controller";
 
         $filesToWrite = [
-            app_path("Modular/{$resource}/{$schemaClass}.php") => $this->schemaCode($schemaClass, $model, $table, $columns),
-            app_path("Http/Controllers/{$controllerClass}.php") => $this->controllerCode($schemaClass, $controllerClass, $model, $resourceSlug, $columns),
+            app_path("Modular/{$resource}/{$schemaClass}.php") => $this->schemaCode($schemaClass, $model, $table, $safeColumns),
+            app_path("Http/Controllers/{$controllerClass}.php") => $this->controllerCode($schemaClass, $controllerClass, $model, $resourceSlug, $safeColumns),
             base_path('routes/modular.php') => $this->routeCode($controllerClass, $resourceSlug),
         ];
 
@@ -102,8 +108,17 @@ final class CreateCommand extends Command
 
         foreach ($columns as $column) {
             $type = Schema::getColumnType($table, $column);
+
+            if ($this->isSensitiveColumn($column) && ! str_contains(strtolower($column), 'password')) {
+                continue;
+            }
+
             $field = $this->fieldExpression($column, $type, $fieldImports);
             $fieldLines[] = "            {$field},";
+
+            if ($this->isSensitiveColumn($column)) {
+                continue;
+            }
 
             $column = var_export($column, true);
             $columnType = $type === 'boolean' ? 'BooleanColumn' : 'TextColumn';
@@ -143,6 +158,14 @@ final class CreateCommand extends Command
         return $expression;
     }
 
+    private function isSensitiveColumn(string $column): bool
+    {
+        return str_contains(strtolower($column), 'password')
+            || str_contains(strtolower($column), 'secret')
+            || str_contains(strtolower($column), 'recovery')
+            || str_contains(strtolower($column), 'token');
+    }
+
     /** @param list<string> $columns */
     private function controllerCode(string $schemaClass, string $controllerClass, string $model, string $resourceSlug, array $columns): string
     {
@@ -167,11 +190,12 @@ final class CreateCommand extends Command
     {
         $resourceSlug = Str::kebab(Str::pluralStudly($resource));
         $resourceVariable = $this->resourceVariable($resource);
-        $props = $mode === 'edit' ? ", {$resourceVariable}?: { id: number }" : '';
+        $props = $mode === 'edit' ? ", {$resourceVariable}" : '';
         $url = $mode === 'edit' ? "'/{$resourceSlug}/' + {$resourceVariable}?.id" : "'/{$resourceSlug}'";
         $method = $mode === 'edit' ? 'put' : 'post';
+        $typeProps = $mode === 'edit' ? "; {$resourceVariable}: { id: number }" : '';
 
-        return "import { Head, router } from '@inertiajs/react';\nimport { ModularForm } from '@/components/modular/ModularForm';\n\nexport default function ".Str::studly($mode)."({ form{$props} }: { form: Parameters<typeof ModularForm>[0]['form']; {$resourceVariable}?: { id: number } }) {\n    return <><Head title=\"{$mode} {$resource}\" /><ModularForm form={form} onSubmit={(event) => { event.preventDefault(); router->{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget))); }} /></>;\n}\n";
+        return "import { Head, router } from '@inertiajs/react';\nimport { ModularForm } from '@/components/modular/ModularForm';\n\nexport default function ".Str::studly($mode)."({ form{$props} }: { form: Parameters<typeof ModularForm>[0]['form']{$typeProps} }) {\n    return <><Head title=\"{$mode} {$resource}\" /><ModularForm form={form} onSubmit={(event) => { event.preventDefault(); router.{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget))); }} /></>;\n}\n";
     }
 
     private function resourceVariable(string $resource): string
