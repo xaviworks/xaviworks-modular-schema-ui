@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f2465b5e3c7af123e8201cb0daa036e0",
+    "content-hash": "ce050d3b4e804f3dea44236cbc997c75",
     "packages": [
         {
             "name": "brick/math",
@@ -5997,6 +5997,46 @@
                 }
             ],
             "time": "2026-04-26T05:33:54+00:00"
+        },
+        {
+            "name": "xaviworks/modular-schema-ui",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/modular-schema-ui",
+                "reference": "3b61728d9358a38919232dac85e07be6abc0770b"
+            },
+            "require": {
+                "illuminate/support": "^13.0",
+                "illuminate/view": "^13.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "XaviWorks\\ModularSchemaUi\\ModularSchemaUiServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "XaviWorks\\ModularSchemaUi\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Junn Xavier Adalid"
+                }
+            ],
+            "description": "A modular, Blade-first schema-driven UI toolkit for Laravel.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         }
     ],
     "packages-dev": [
@@ -9572,7 +9612,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "xaviworks/modular-schema-ui": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

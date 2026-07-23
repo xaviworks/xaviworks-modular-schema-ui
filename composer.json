@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "xaviworks/modular-schema-ui",
+    "name": "xaviworks/modular-schema-ui-workbench",
     "type": "project",
-    "description": "A modular, Blade-first schema-driven UI toolkit for Laravel.",
+    "description": "Laravel workbench for the XaviWorks modular schema-driven UI toolkit.",
     "keywords": ["laravel", "schema", "ui", "forms", "tables", "xaviworks"],
     "authors": [
         {
@@ -13,8 +13,18 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^13.8",
+        "xaviworks/modular-schema-ui": "dev-main",
         "laravel/tinker": "^3.0"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "packages/modular-schema-ui",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "laravel/pail": "^1.2.5",
