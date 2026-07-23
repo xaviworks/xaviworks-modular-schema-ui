@@ -24,7 +24,20 @@ final class InstallCommand extends Command
             return self::FAILURE;
         }
 
+        $this->newLine();
+        $this->line('<fg=bright-blue;options=bold>XaviWorks Modular Schema UI</>');
+        $this->line('Created by Junn Xavier Adalid');
+        $this->line('A frontend-neutral Laravel toolkit for reusable forms, tables, filters, actions, and validation.');
+        $this->newLine();
         $this->info("Selected Modular frontend: {$frontend}");
+
+        if (! $this->option('dry-run')
+            && ! $this->option('no-interaction')
+            && ! $this->confirm("Install the {$frontend} Modular adapter?", true)) {
+            $this->warn('Modular adapter installation cancelled.');
+
+            return self::SUCCESS;
+        }
 
         if ($frontend === 'blade') {
             $this->line('Blade support is provided by the package; no application files are required.');

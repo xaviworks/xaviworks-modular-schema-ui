@@ -92,6 +92,9 @@ final class PackageSmokeTest extends TestCase
         $this->artisan('modular:install', [
             '--frontend' => 'react',
             '--dry-run' => true,
-        ])->expectsOutput('Selected Modular frontend: react')->assertSuccessful();
+        ])->expectsOutput('XaviWorks Modular Schema UI')
+            ->expectsOutput('Created by Junn Xavier Adalid')
+            ->expectsOutput('Selected Modular frontend: react')
+            ->assertSuccessful();
     }
 }
