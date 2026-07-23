@@ -9,48 +9,136 @@ type Table = {
     records: Array<Record<string, unknown>>;
     emptyMessage: string;
     perPageOptions: number[];
-    controls: { searchable: boolean; search?: string | null; sort?: string | null; direction: string; filters: Record<string, string | number | null> };
-    pagination?: { currentPage: number; lastPage: number; perPage: number; total: number; from: number | null; to: number | null; prevUrl?: string | null; nextUrl?: string | null } | null;
+    controls: {
+        searchable: boolean;
+        search?: string | null;
+        sort?: string | null;
+        direction: string;
+        filters: Record<string, string | number | null>;
+    };
+    pagination?: {
+        currentPage: number;
+        lastPage: number;
+        perPage: number;
+        total: number;
+        from: number | null;
+        to: number | null;
+        prevUrl?: string | null;
+        nextUrl?: string | null;
+    } | null;
 };
 
 type TableQuery = Record<string, string | number | null | undefined | Record<string, string | number | null | undefined>>;
 
 function updateTable(data: TableQuery) {
-    router.get(window.location.pathname, data, { preserveState: true, preserveScroll: true, replace: true });
+    router.get(window.location.pathname, data, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+    });
 }
 
 export function ModularTable({ table }: { table: Table }) {
     const apply = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+
         const form = new FormData(event.currentTarget);
         const filters: Record<string, string> = {};
+
         table.filters.forEach((filter) => {
             const value = form.get(`filters[${filter.name}]`);
+
             if (value) filters[filter.name] = String(value);
         });
+
         const search = form.get('search');
-        updateTable({ search: search ? String(search) : undefined, filters, per_page: table.pagination?.perPage, page: 1 });
+
+        updateTable({
+            search: search ? String(search) : undefined,
+            filters,
+            per_page: table.pagination?.perPage,
+            page: 1,
+        });
     };
 
     const sort = (column: Column) => {
-        if (! column.sortable) return;
-        updateTable({ sort: column.name, direction: table.controls.sort === column.name && table.controls.direction === 'asc' ? 'desc' : 'asc', search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination?.perPage });
+        if (!column.sortable) return;
+
+        updateTable({
+            sort: column.name,
+            direction: table.controls.sort === column.name && table.controls.direction === 'asc' ? 'desc' : 'asc',
+            search: table.controls.search ?? undefined,
+            filters: table.controls.filters,
+            per_page: table.pagination?.perPage,
+        });
     };
 
-    return <div className="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
-        <form onSubmit={apply} className="flex flex-wrap items-end gap-3">
-            {table.controls.searchable && <label className="w-full max-w-md text-sm font-medium">Search<input name="search" type="search" defaultValue={table.controls.search ?? ''} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900" /></label>}
-            {table.filters.map((filter) => <label key={filter.name} className="min-w-40 text-sm font-medium">{filter.label}{Object.keys(filter.options ?? {}).length > 0 ? <select name={`filters[${filter.name}]`} defaultValue={String(table.controls.filters[filter.name] ?? '')} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900"><option value="">All</option>{Object.entries(filter.options ?? {}).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select> : <input name={`filters[${filter.name}]`} type="search" defaultValue={String(table.controls.filters[filter.name] ?? '')} placeholder={`Filter ${filter.label}`} className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900" />}</label>)}
-            <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">Apply</button>
-        </form>
+    return (
+        <div className="space-y-5">
+            <form onSubmit={apply} className="flex flex-wrap items-center gap-3">
+                {table.controls.searchable && (
+                    <label className="relative min-w-0 flex-1 text-sm font-medium">
+                        <span className="sr-only">Search</span>
+                        <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">⌕</span>
+                        <input
+                            name="search"
+                            type="search"
+                            placeholder="Search..."
+                            defaultValue={table.controls.search ?? ''}
+                            className="block h-11 w-full rounded-lg border border-gray-200 bg-white px-10 text-sm font-normal shadow-sm outline-none ring-green-600 transition focus:border-green-600 focus:ring-2 dark:border-gray-700 dark:bg-gray-900"
+                        />
+                    </label>
+                )}
 
-        <div className="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-800"><table className="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-800">
-            <thead className="bg-gray-50 dark:bg-gray-900"><tr>{table.columns.map((column) => <th key={column.name} className="px-4 py-3 font-semibold">{column.sortable ? <button type="button" onClick={() => sort(column)} className="hover:underline">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}</th>)}</tr></thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {table.records.length === 0 ? <tr><td className="px-4 py-6 text-center text-gray-500" colSpan={table.columns.length}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index}>{table.columns.map((column) => <td className="whitespace-nowrap px-4 py-3" key={column.name}>{String(record[column.name] ?? '')}</td>)}</tr>)}
-            </tbody>
-        </table></div>
+                {table.filters.map((filter) => (
+                    <label key={filter.name} className="min-w-40 text-sm font-medium">
+                        <span className="sr-only">{filter.label}</span>
+                        {Object.keys(filter.options ?? {}).length > 0 ? (
+                            <select
+                                name={`filters[${filter.name}]`}
+                                defaultValue={String(table.controls.filters[filter.name] ?? '')}
+                                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-normal shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                            >
+                                <option value="">Any {filter.label}</option>
+                                {Object.entries(filter.options ?? {}).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                        ) : (
+                            <input
+                                name={`filters[${filter.name}]`}
+                                type="search"
+                                placeholder={`Filter ${filter.label}`}
+                                defaultValue={String(table.controls.filters[filter.name] ?? '')}
+                                className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm font-normal shadow-sm dark:border-gray-700 dark:bg-gray-900"
+                            />
+                        )}
+                    </label>
+                ))}
 
-        {table.pagination && <div className="flex flex-wrap items-end justify-between gap-4 text-sm"><span>Showing {table.pagination.from ?? 0} to {table.pagination.to ?? 0} of {table.pagination.total}</span><div className="flex items-end gap-3"><label className="font-medium">Per page<select defaultValue={String(table.pagination.perPage)} onChange={(event) => updateTable({ page: 1, per_page: event.target.value, search: table.controls.search ?? undefined, filters: table.controls.filters })} className="mt-1 block rounded-md border border-gray-300 px-3 py-2 font-normal dark:border-gray-700 dark:bg-gray-900">{table.perPageOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label><div className="flex gap-2"><button type="button" disabled={!table.pagination.prevUrl} onClick={() => updateTable({ page: table.pagination!.currentPage - 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="rounded-md border border-gray-300 px-3 py-2 disabled:opacity-50 dark:border-gray-700">Previous</button><button type="button" disabled={!table.pagination.nextUrl} onClick={() => updateTable({ page: table.pagination!.currentPage + 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="rounded-md border border-gray-300 px-3 py-2 disabled:opacity-50 dark:border-gray-700">Next</button></div></div></div>}
-    </div>;
+                <button type="submit" className="h-11 rounded-lg bg-emerald-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800">
+                    Filter
+                </button>
+            </form>
+
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                        <thead className="bg-gray-50/80 dark:bg-gray-900/80">
+                            <tr>
+                                {table.columns.map((column) => (
+                                    <th key={column.name} className="px-6 py-4 text-xs font-semibold uppercase tracking-widest text-gray-500 dark:text-gray-400">
+                                        {column.sortable ? <button type="button" onClick={() => sort(column)} className="hover:text-gray-900 dark:hover:text-white">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                            {table.records.length === 0 ? <tr><td className="px-6 py-10 text-center text-gray-500" colSpan={table.columns.length}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index} className="transition hover:bg-gray-50/70 dark:hover:bg-gray-900/50">{table.columns.map((column) => <td className="whitespace-nowrap px-6 py-5 text-gray-800 dark:text-gray-200" key={column.name}>{String(record[column.name] ?? '')}</td>)}</tr>)}
+                        </tbody>
+                    </table>
+                </div>
+
+                {table.pagination && <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 text-sm text-gray-500"><span>Showing {table.pagination.from ?? 0}-{table.pagination.to ?? 0} of {table.pagination.total}</span><div className="flex items-center gap-3"><label className="flex items-center gap-2">Rows<select aria-label="Rows per page" defaultValue={String(table.pagination.perPage)} onChange={(event) => updateTable({ page: 1, per_page: event.target.value, search: table.controls.search ?? undefined, filters: table.controls.filters })} className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-gray-800 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">{table.perPageOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label><div className="flex gap-2"><button type="button" disabled={!table.pagination.prevUrl} onClick={() => updateTable({ page: table.pagination!.currentPage - 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="h-10 rounded-lg border border-gray-200 px-4 disabled:opacity-40 dark:border-gray-700">Previous</button><button type="button" disabled={!table.pagination.nextUrl} onClick={() => updateTable({ page: table.pagination!.currentPage + 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="h-10 rounded-lg border border-gray-200 px-4 disabled:opacity-40 dark:border-gray-700">Next</button></div></div></div>}
+            </div>
+        </div>
+    );
 }
