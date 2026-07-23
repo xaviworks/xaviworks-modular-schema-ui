@@ -1,8 +1,9 @@
 <div class="modular-table-wrapper" role="region" aria-label="Data table" tabindex="0">
-    @if ($table->getFilters()->isNotEmpty() || $table->searchableColumnNames() !== [])
+    @if ($table->getFilters()->isNotEmpty() || $table->searchableColumnNames() !== [] || $table->getPaginator())
         @php
             $activeFilters = $state?->filters() ?? request()->input('filters', []);
             $activeSearch = $state?->search() ?? request()->input('search');
+            $activePerPage = $state?->perPage() ?? request()->input('per_page', $table->getPerPageOptions()[0] ?? 15);
         @endphp
 
         <form method="GET" action="{{ $filterAction ?? request()->url() }}" class="modular-table-controls">
@@ -25,6 +26,17 @@
                     @endforeach
                 </select>
             @endforeach
+
+            @if ($table->getPaginator())
+                <label for="modular-per-page">Per page</label>
+                <select id="modular-per-page" name="per_page">
+                    @foreach ($table->getPerPageOptions() as $perPage)
+                        <option value="{{ $perPage }}" @selected((int) $activePerPage === $perPage)>
+                            {{ $perPage }}
+                        </option>
+                    @endforeach
+                </select>
+            @endif
 
             <button type="submit">Apply</button>
             <a href="{{ $filterAction ?? request()->url() }}">Reset</a>
@@ -55,4 +67,27 @@
             @endforelse
         </tbody>
     </table>
+
+    @if ($table->getPaginator())
+        @php($paginator = $table->getPaginator())
+
+        <nav aria-label="Pagination">
+            <p>
+                Showing {{ $paginator->firstItem() ?? 0 }} to {{ $paginator->lastItem() ?? 0 }}
+                of {{ $paginator->total() }} results
+            </p>
+
+            @if ($paginator->onFirstPage())
+                <span aria-disabled="true">Previous</span>
+            @else
+                <a href="{{ $paginator->previousPageUrl() }}">Previous</a>
+            @endif
+
+            @if ($paginator->hasMorePages())
+                <a href="{{ $paginator->nextPageUrl() }}">Next</a>
+            @else
+                <span aria-disabled="true">Next</span>
+            @endif
+        </nav>
+    @endif
 </div>

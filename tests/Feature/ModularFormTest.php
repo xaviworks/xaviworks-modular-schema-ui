@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Hidden;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Password;
@@ -261,4 +263,57 @@ it('renders modular search and filter controls with active state', function (): 
         ->assertSee('name="filters[role]"', false)
         ->assertSee('value="admin"', false)
         ->assertSee('>Reset</a>', false);
+});
+
+it('paginates modular queries with an allowlisted per-page size', function (): void {
+    Schema::dropIfExists('modular_pagination_rows');
+    Schema::create('modular_pagination_rows', function ($table): void {
+        $table->id();
+        $table->string('name');
+    });
+
+    DB::table('modular_pagination_rows')->insert([
+        ['name' => 'One'],
+        ['name' => 'Two'],
+        ['name' => 'Three'],
+    ]);
+
+    $state = RequestState::from(['page' => 2, 'per_page' => 2], []);
+    $paginator = QueryPipeline::make()->paginate(
+        DB::table('modular_pagination_rows')->orderBy('id'),
+        $state,
+        [2, 10],
+    );
+
+    expect($paginator->currentPage())->toBe(2)
+        ->and($paginator->perPage())->toBe(2)
+        ->and($paginator->total())->toBe(3)
+        ->and($paginator->count())->toBe(1);
+
+    Schema::dropIfExists('modular_pagination_rows');
+});
+
+it('renders modular pagination navigation and result summary', function (): void {
+    $paginator = new LengthAwarePaginator(
+        [['name' => 'Three']],
+        3,
+        2,
+        2,
+        ['path' => '/modular/table'],
+    );
+
+    $table = Table::make()
+        ->paginate($paginator)
+        ->perPageOptions([2, 10])
+        ->columns([TextColumn::make('name')]);
+
+    $state = RequestState::from(['page' => 2, 'per_page' => 2], []);
+
+    $this->view('modular-table-test', compact('table', 'state'))
+        ->assertSee('Showing 3 to 3')
+        ->assertSee('of 3 results')
+        ->assertSee('aria-label="Pagination"', false)
+        ->assertSee('Previous')
+        ->assertSee('Next')
+        ->assertSee('name="per_page"', false);
 });

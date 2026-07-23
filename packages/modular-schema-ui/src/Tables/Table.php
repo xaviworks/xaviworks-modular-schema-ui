@@ -2,6 +2,7 @@
 
 namespace XaviWorks\ModularSchemaUi\Tables;
 
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
@@ -18,6 +19,11 @@ final class Table
     private Collection $filters;
 
     private string $emptyMessage = 'No records found.';
+
+    private ?LengthAwarePaginator $paginator = null;
+
+    /** @var list<int> */
+    private array $perPageOptions = [10, 25, 50];
 
     public function __construct()
     {
@@ -47,6 +53,25 @@ final class Table
         return $this;
     }
 
+    public function paginate(LengthAwarePaginator $paginator): self
+    {
+        $this->paginator = $paginator;
+        $this->records = collect($paginator->items());
+
+        return $this;
+    }
+
+    /** @param list<int> $options */
+    public function perPageOptions(array $options): self
+    {
+        $this->perPageOptions = array_values(array_filter(
+            $options,
+            fn (mixed $option): bool => is_int($option) && $option > 0,
+        ));
+
+        return $this;
+    }
+
     /** @param array<int, FilterContract> $filters */
     public function filters(array $filters): self
     {
@@ -72,6 +97,17 @@ final class Table
     public function getRecords(): Collection
     {
         return $this->records;
+    }
+
+    public function getPaginator(): ?LengthAwarePaginator
+    {
+        return $this->paginator;
+    }
+
+    /** @return list<int> */
+    public function getPerPageOptions(): array
+    {
+        return $this->perPageOptions;
     }
 
     /** @return list<string> */

@@ -10,6 +10,8 @@ final class RequestState
         private readonly ?string $search,
         /** @var array<string, scalar> */
         private readonly array $filters,
+        private readonly int $page,
+        private readonly int $perPage,
     ) {}
 
     /** @param list<string> $sortableColumns */
@@ -46,7 +48,15 @@ final class RequestState
             }
         }
 
-        return new self($sort, $direction, $search, $filters);
+        $page = filter_var($input['page'] ?? null, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]) ?: 1;
+
+        $perPage = filter_var($input['per_page'] ?? null, FILTER_VALIDATE_INT, [
+            'options' => ['min_range' => 1],
+        ]) ?: 15;
+
+        return new self($sort, $direction, $search, $filters, $page, $perPage);
     }
 
     public function sort(): ?string
@@ -68,5 +78,15 @@ final class RequestState
     public function filters(): array
     {
         return $this->filters;
+    }
+
+    public function page(): int
+    {
+        return $this->page;
+    }
+
+    public function perPage(): int
+    {
+        return $this->perPage;
     }
 }
