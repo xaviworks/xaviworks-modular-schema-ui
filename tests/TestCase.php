@@ -1,10 +1,14 @@
 <?php
 
-namespace Tests;
+namespace XaviWorks\ModularSchemaUi\Tests;
 
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Orchestra\Testbench\TestCase as OrchestraTestCase;
+use XaviWorks\ModularSchemaUi\ModularSchemaUiServiceProvider;
 
-abstract class TestCase extends BaseTestCase
+abstract class TestCase extends OrchestraTestCase
 {
-    //
+    protected function getPackageProviders($app): array
+    {
+        return [ModularSchemaUiServiceProvider::class];
+    }
 }

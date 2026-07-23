@@ -1,6 +1,8 @@
-# Modular Schema UI
+# XaviWorks Modular Schema UI
 
-Laravel application and development workbench for the XaviWorks schema-driven UI toolkit.
+An installable, Blade-first Laravel package for modular forms, tables, search, filters, sorting, and pagination.
+
+The Laravel application used for examples and integration checks lives in `workbench/`.
 
 Maintained by Junn Xavier Adalid under the XaviWorks developer name.
 
