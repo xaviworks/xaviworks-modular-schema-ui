@@ -49,3 +49,28 @@ it('renders the expanded modular field set safely', function (): void {
         ->assertSee('type="password"', false)
         ->assertSee('type="hidden"', false);
 });
+
+it('resolves model values and field defaults without populating passwords', function (): void {
+    $form = Form::make()
+        ->model((object) [
+            'name' => 'Junn Xavier',
+            'bio' => 'Building modular Laravel tools.',
+            'role' => 'admin',
+            'password' => 'never-render-this',
+        ])
+        ->fields([
+            Text::make('name'),
+            Textarea::make('bio'),
+            Select::make('role')->options(['admin' => 'Administrator']),
+            Password::make('password'),
+            Text::make('fallback')->default('Default value'),
+        ]);
+
+    $response = $this->withViewErrors([])->view('modular-form-test', compact('form'));
+
+    $response->assertSee('value="Junn Xavier"', false)
+        ->assertSee('Building modular Laravel tools.')
+        ->assertSee('value="admin" selected', false)
+        ->assertSee('value="Default value"', false)
+        ->assertDontSee('never-render-this');
+});

@@ -10,6 +10,8 @@ abstract class Field implements FieldContract
 
     protected bool $required = false;
 
+    protected mixed $defaultValue = null;
+
     /** @var array<string, mixed> */
     protected array $attributes = [];
 
@@ -33,6 +35,13 @@ abstract class Field implements FieldContract
     public function required(bool $required = true): static
     {
         $this->required = $required;
+
+        return $this;
+    }
+
+    public function default(mixed $value): static
+    {
+        $this->defaultValue = $value;
 
         return $this;
     }
@@ -69,6 +78,11 @@ abstract class Field implements FieldContract
     public function canRestoreValue(): bool
     {
         return true;
+    }
+
+    public function defaultValue(): mixed
+    {
+        return $this->defaultValue;
     }
 
     /** @return array<string, mixed> */

@@ -15,7 +15,7 @@
     @foreach ($form->getFields() as $field)
         @php
             $fieldId = 'modular-'.$field->name();
-            $fieldValue = $field->canRestoreValue() ? old($field->name()) : null;
+            $fieldValue = $form->valueFor($field);
             $fieldAttributes = $field->htmlAttributes();
         @endphp
 

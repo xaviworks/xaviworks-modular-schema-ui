@@ -15,6 +15,8 @@ interface Field
 
     public function canRestoreValue(): bool;
 
+    public function defaultValue(): mixed;
+
     public function isRequired(): bool;
 
     /** @return array<string, mixed> */
