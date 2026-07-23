@@ -13,7 +13,9 @@ type Table = {
     pagination?: { currentPage: number; lastPage: number; perPage: number; total: number; from: number | null; to: number | null; prevUrl?: string | null; nextUrl?: string | null } | null;
 };
 
-function updateTable(data: Record<string, unknown>) {
+type TableQuery = Record<string, string | number | null | undefined | Record<string, string | number | null | undefined>>;
+
+function updateTable(data: TableQuery) {
     router.get(window.location.pathname, data, { preserveState: true, preserveScroll: true, replace: true });
 }
 
@@ -21,12 +23,14 @@ export function ModularTable({ table }: { table: Table }) {
     const apply = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
-        const filters: Record<string, FormDataEntryValue> = {};
+        const filters: Record<string, string> = {};
         table.filters.forEach((filter) => {
             const value = form.get(`filters[${filter.name}]`);
-            if (value) filters[filter.name] = value;
+            if (value) filters[filter.name] = String(value);
         });
-        updateTable({ search: form.get('search') ?? undefined, filters, per_page: form.get('per_page') ?? undefined, page: 1 });
+        const search = form.get('search');
+        const perPage = form.get('per_page');
+        updateTable({ search: search ? String(search) : undefined, filters, per_page: perPage ? String(perPage) : undefined, page: 1 });
     };
 
     const sort = (column: Column) => {
