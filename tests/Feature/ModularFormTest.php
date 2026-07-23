@@ -11,6 +11,7 @@ use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Textarea;
 use XaviWorks\ModularSchemaUi\Forms\Form;
 use XaviWorks\ModularSchemaUi\Query\QueryPipeline;
+use XaviWorks\ModularSchemaUi\Resources\ResourceSchema;
 use XaviWorks\ModularSchemaUi\State\RequestState;
 use XaviWorks\ModularSchemaUi\Tables\Columns\BooleanColumn;
 use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
@@ -342,4 +343,24 @@ it('renders modular pagination navigation and result summary', function (): void
         ->assertSee('Previous')
         ->assertSee('Next')
         ->assertSee('name="per_page"', false);
+});
+
+it('resolves a modular resource form and table definition', function (): void {
+    $resource = new class extends ResourceSchema
+    {
+        public function form(Form $form): Form
+        {
+            return $form->fields([Text::make('name')->required()]);
+        }
+
+        public function table(Table $table): Table
+        {
+            return $table->columns([
+                TextColumn::make('name')->searchable()->sortable(),
+            ]);
+        }
+    };
+
+    expect($resource->resolveForm()->getFields())->toHaveCount(1)
+        ->and($resource->table(Table::make())->getColumns())->toHaveCount(1);
 });
