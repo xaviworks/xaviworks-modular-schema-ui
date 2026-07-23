@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, fileinfo, sqlite3
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+
+      - run: composer validate --strict --no-check-publish
+      - run: composer test
+      - run: composer lint
+
+  workbench:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, fileinfo, sqlite3
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+        working-directory: workbench
+
+      - run: PAO_DISABLE=true ./vendor/bin/pest --colors=never
+        working-directory: workbench

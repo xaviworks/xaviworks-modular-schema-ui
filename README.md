@@ -1,71 +1,106 @@
 # XaviWorks Modular Schema UI
 
-An installable Laravel package for modular forms, tables, search, filters, sorting, and pagination.
+Frontend-neutral modular forms and tables for Laravel applications.
 
-The modular definitions are frontend-neutral. Blade is included as the first
-adapter, while React, Vue, Livewire, or another starter kit can consume the
-same definitions through `Form::toArray()`, `Table::toArray()`, or the
-`SchemaPayload` helper.
-
-The Laravel application used for examples and integration checks lives in `workbench/`.
+Define fields, columns, filters, sorting, searching, and pagination once in
+Laravel. Render the resulting payload with Blade, React/Inertia, Vue/Inertia,
+Livewire, or your own frontend.
 
 Maintained by Junn Xavier Adalid under the XaviWorks developer name.
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+## Status
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This package is currently in active development. The shared Laravel schema
+API and Blade adapter are available, and the installer includes starter
+adapters for React, Vue, and Livewire.
 
-## About Laravel
+## Installation
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+For the development branch:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer require xaviworks/modular-schema-ui:dev-main
+php artisan modular:install --frontend=react
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Supported adapters are `blade`, `react`, `vue`, and `livewire`. If no adapter
+is specified, the installer detects React/Inertia, Vue/Inertia, or Livewire
+from the host application and falls back to Blade.
 
-## Contributing
+## Define a modular schema
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```php
+use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
+use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
+use XaviWorks\ModularSchemaUi\Resources\ResourceSchema;
 
-## Code of Conduct
+final class UserSchema extends ResourceSchema
+{
+    public function form(Form $form): Form
+    {
+        return $form->fields([
+            Text::make('name')->required(),
+            Email::make('email')->required(),
+        ]);
+    }
+}
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Use it with React/Inertia
 
-## Security Vulnerabilities
+```php
+use Inertia\Inertia;
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+return Inertia::render('Users/Create', [
+    'form' => (new UserSchema)->formPayload(),
+]);
+```
+
+The installer places the React components in:
+
+```text
+resources/js/components/modular/
+```
+
+They consume the same payload produced by the Laravel schema. The package
+does not require React components to be used with the Blade adapter.
+
+## Use it with Blade
+
+```blade
+<x-modular-schema-ui::form :form="$form" action="{{ route('users.store') }}" />
+```
+
+## Package architecture
+
+```text
+src/Forms       Form and field definitions
+src/Tables      Table, column, and filter definitions
+src/Resources   Reusable resource schemas
+src/Query       Search, filter, sort, and pagination pipeline
+src/State       Normalized request state
+src/Support     Frontend-neutral schema payloads
+src/View        Blade adapter
+stubs/frontend  React, Vue, and Livewire starter adapters
+workbench       Laravel integration application
+```
+
+## Development
+
+```bash
+composer install
+composer test
+composer lint
+composer validate --strict --no-check-publish
+
+cd workbench
+PAO_DISABLE=true ./vendor/bin/pest
+```
+
+The workbench is for package development and is excluded from package
+archives. It is not required by applications installing the package.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The MIT License. See [LICENSE](LICENSE).
