@@ -242,6 +242,32 @@ it('applies only allowlisted modular filters to a query', function (): void {
         ->and($query->getBindings())->toBe(['admin', true]);
 });
 
+it('combines modular search, filters, and sorting in order', function (): void {
+    $table = Table::make()
+        ->columns([
+            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('email')->searchable(),
+        ])
+        ->filters([
+            SelectFilter::make('role')->options(['admin' => 'Administrator']),
+        ]);
+
+    $state = RequestState::from([
+        'search' => 'Junn',
+        'filters' => ['role' => 'admin'],
+        'sort' => 'name',
+        'direction' => 'desc',
+    ], $table->sortableColumnNames(), $table->filterNames());
+
+    $query = QueryPipeline::make()->apply(DB::query()->from('users'), $table, $state);
+    $sql = $query->toSql();
+
+    expect($sql)->toContain('"name" like ?')
+        ->and($sql)->toContain('"email" like ?')
+        ->and($sql)->toContain('"role" = ?')
+        ->and($sql)->toContain('order by "name" desc');
+});
+
 it('renders modular search and filter controls with active state', function (): void {
     $table = Table::make()
         ->filters([

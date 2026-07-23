@@ -26,6 +26,14 @@ final class QueryPipeline
         return $query->orderBy($sort, $state->direction());
     }
 
+    public function apply(Builder $query, Table $table, RequestState $state): Builder
+    {
+        $query = $this->search($query, $table, $state);
+        $query = $this->filters($query, $table, $state);
+
+        return $this->sort($query, $table, $state);
+    }
+
     public function search(Builder $query, Table $table, RequestState $state): Builder
     {
         $search = $state->search();
@@ -78,5 +86,21 @@ final class QueryPipeline
         return $query
             ->paginate($perPage, ['*'], 'page', $state->page())
             ->withQueryString();
+    }
+
+    /** @param list<int> $perPageOptions */
+    public function resolve(
+        Builder $query,
+        Table $table,
+        RequestState $state,
+        array $perPageOptions = [10, 25, 50],
+        int $maximumPerPage = 100,
+    ): LengthAwarePaginator {
+        return $this->paginate(
+            $this->apply($query, $table, $state),
+            $state,
+            $perPageOptions,
+            $maximumPerPage,
+        );
     }
 }
