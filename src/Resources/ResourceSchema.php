@@ -37,9 +37,14 @@ abstract class ResourceSchema
         return $this->resolveForm()->validationRules();
     }
 
+    public function resolveTableDefinition(): Table
+    {
+        return $this->table(Table::make());
+    }
+
     public function resolveTable(Builder $query, RequestState $state): Table
     {
-        $table = $this->table(Table::make());
+        $table = $this->resolveTableDefinition();
         $paginator = QueryPipeline::make()->resolve(
             $query,
             $table,

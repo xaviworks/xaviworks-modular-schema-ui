@@ -1,13 +1,30 @@
 <script setup lang="ts">
-defineProps<{ table: { columns: Array<{ name: string; label: string }>; records: Array<Record<string, unknown>>; emptyMessage: string> } }>();
+import { router } from '@inertiajs/vue3';
+import { reactive } from 'vue';
+
+type Table = { columns: Array<{ name: string; label: string; sortable?: boolean }>; filters: Array<{ name: string; label: string; options?: Record<string, string> }>; records: Array<Record<string, unknown>>; emptyMessage: string; perPageOptions: number[]; actions: Array<{ name: string; label: string; method: string; url?: string | null; confirm?: string | null }>; controls: { searchable: boolean; search?: string | null; sort?: string | null; direction: string; filters: Record<string, string | number | null> }; pagination?: { currentPage: number; lastPage: number; perPage: number; total: number; from: number | null; to: number | null; prevUrl?: string | null; nextUrl?: string | null } | null };
+const props = defineProps<{ table: Table }>();
+const query = reactive<{ search: string; filters: Record<string, unknown>; per_page: unknown }>({ search: props.table.controls.search ?? '', filters: { ...props.table.controls.filters }, per_page: props.table.pagination?.perPage });
+const apply = () => router.get(window.location.pathname, { ...query, page: 1 }, { preserveState: true, preserveScroll: true, replace: true });
+const urlFor = (template: string, record: Record<string, unknown>) => template.replace(/\{([^}]+)\}/g, (_, key: string) => String(record[key] ?? ''));
+const action = (item: Table['actions'][number], record: Record<string, unknown>) => { if (item.confirm && !window.confirm(item.confirm)) return; router.visit(urlFor(item.url ?? '', record), item.method === 'GET' ? {} : { method: item.method.toLowerCase() as 'post' | 'put' | 'patch' | 'delete' }); };
 </script>
 
 <template>
-    <table>
-        <thead><tr><th v-for="column in table.columns" :key="column.name">{{ column.label }}</th></tr></thead>
-        <tbody>
-            <tr v-if="table.records.length === 0"><td :colspan="table.columns.length">{{ table.emptyMessage }}</td></tr>
-            <tr v-for="(record, index) in table.records" v-else :key="index"><td v-for="column in table.columns" :key="column.name">{{ record[column.name] }}</td></tr>
-        </tbody>
-    </table>
+    <div class="space-y-5">
+        <form class="flex flex-wrap items-center gap-3" @submit.prevent="apply">
+            <input v-if="table.controls.searchable" v-model="query.search" name="search" type="search" placeholder="Search..." class="modular-table-search h-11 min-w-0 flex-1 rounded-lg border px-3">
+            <template v-for="filter in table.filters" :key="filter.name">
+                <select v-if="Object.keys(filter.options ?? {}).length" v-model="query.filters[filter.name]" class="modular-table-filter h-11 rounded-lg border px-3"><option value="">Any {{ filter.label }}</option><option v-for="(label, value) in filter.options" :key="value" :value="value">{{ label }}</option></select>
+                <input v-else v-model="query.filters[filter.name]" :placeholder="`Filter ${filter.label}`" class="modular-table-filter h-11 rounded-lg border px-3">
+            </template>
+            <button type="submit" class="modular-filter-button h-11 rounded-lg px-5 font-semibold">Filter</button>
+        </form>
+        <div class="modular-table-card overflow-x-auto rounded-xl border shadow-sm">
+            <table class="min-w-full text-left text-sm"><thead><tr><th v-for="column in table.columns" :key="column.name" class="px-6 py-4 text-xs uppercase tracking-widest">{{ column.label }}</th><th v-if="table.actions.length" class="px-6 py-4 text-xs uppercase tracking-widest">Actions</th></tr></thead>
+                <tbody><tr v-if="!table.records.length"><td :colspan="table.columns.length + (table.actions.length ? 1 : 0)" class="px-6 py-10 text-center">{{ table.emptyMessage }}</td></tr><tr v-for="(record, index) in table.records" v-else :key="index"><td v-for="column in table.columns" :key="column.name" class="px-6 py-5">{{ record[column.name] ?? '' }}</td><td v-if="table.actions.length" class="px-6 py-5"><button v-for="item in table.actions" :key="item.name" type="button" class="modular-action-button mr-2" @click="action(item, record)">{{ item.label }}</button></td></tr></tbody>
+            </table>
+            <div v-if="table.pagination" class="flex items-center justify-between px-6 py-4"><span>Showing {{ table.pagination.from ?? 0 }}-{{ table.pagination.to ?? 0 }} of {{ table.pagination.total }}</span><div class="flex gap-2"><select v-model="query.per_page" aria-label="Rows per page" @change="apply"><option v-for="option in table.perPageOptions" :key="option" :value="option">{{ option }}</option></select><button type="button" :disabled="!table.pagination.prevUrl" @click="router.get(table.pagination.prevUrl ?? '#', query)">Previous</button><button type="button" :disabled="!table.pagination.nextUrl" @click="router.get(table.pagination.nextUrl ?? '#', query)">Next</button></div></div>
+        </div>
+    </div>
 </template>

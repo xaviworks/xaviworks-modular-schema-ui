@@ -49,6 +49,9 @@
                 @foreach ($table->getColumns() as $column)
                     <th scope="col">{{ $column->labelText() }}</th>
                 @endforeach
+                @if ($table->getActions()->isNotEmpty())
+                    <th scope="col">Actions</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -57,10 +60,26 @@
                     @foreach ($table->getColumns() as $column)
                         <td>{{ $column->displayValue($record) }}</td>
                     @endforeach
+                    @if ($table->getActions()->isNotEmpty())
+                        <td>
+                            @foreach ($table->getActions() as $action)
+                                @php($actionUrl = str_replace('{id}', (string) data_get($record, 'id'), (string) $action->urlTemplate()))
+                                @if ($action->method() === 'GET')
+                                    <a href="{{ $actionUrl }}">{{ $action->labelText() }}</a>
+                                @else
+                                    <form method="POST" action="{{ $actionUrl }}" style="display:inline">
+                                        @csrf
+                                        @method($action->method())
+                                        <button type="submit" @if ($action->confirmationMessage()) onclick="return confirm(@js($action->confirmationMessage()))" @endif>{{ $action->labelText() }}</button>
+                                    </form>
+                                @endif
+                            @endforeach
+                        </td>
+                    @endif
                 </tr>
             @empty
                 <tr>
-                    <td colspan="{{ max(1, $table->getColumns()->count()) }}">
+                    <td colspan="{{ max(1, $table->getColumns()->count() + $table->getActions()->count()) }}">
                         {{ $table->emptyStateMessage() }}
                     </td>
                 </tr>

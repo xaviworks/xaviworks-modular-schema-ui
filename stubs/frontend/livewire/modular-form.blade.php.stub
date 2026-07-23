@@ -1,9 +1,17 @@
-<form wire:submit="save">
+<form wire:submit="save" class="modular-form">
     @foreach ($form['fields'] as $field)
-        <label>
-            {{ $field['label'] }}
-            <input wire:model="data.{{ $field['name'] }}" type="{{ $field['type'] }}" @required($field['required'])>
-        </label>
+        <div class="modular-form-field">
+            @if ($field['type'] !== 'hidden')<label for="modular-{{ $field['name'] }}">{{ $field['label'] }} @if ($field['required'])<span aria-hidden="true">*</span>@endif</label>@endif
+            @if ($field['type'] === 'select')
+                <select id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" @required($field['required'])><option value="">Select {{ $field['label'] }}</option>@foreach ($field['options'] ?? [] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
+            @elseif ($field['type'] === 'textarea')
+                <textarea id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" @required($field['required'])></textarea>
+            @else
+                <input id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" type="{{ $field['type'] }}" @required($field['required'])>
+            @endif
+            @if ($field['help'])<small>{{ $field['help'] }}</small>@endif
+            @error('data.'.$field['name'])<small role="alert">{{ $message }}</small>@enderror
+        </div>
     @endforeach
     <button type="submit">Submit</button>
 </form>

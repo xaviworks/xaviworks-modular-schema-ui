@@ -3,9 +3,11 @@ import type { FormEvent } from 'react';
 
 type Column = { name: string; label: string; sortable?: boolean };
 type Filter = { name: string; label: string; options?: Record<string, string> };
+type Action = { name: string; label: string; method: string; url?: string | null; confirm?: string | null };
 type Table = {
     columns: Column[];
     filters: Filter[];
+    actions: Action[];
     records: Array<Record<string, unknown>>;
     emptyMessage: string;
     perPageOptions: number[];
@@ -36,6 +38,10 @@ function updateTable(data: TableQuery) {
         preserveScroll: true,
         replace: true,
     });
+}
+
+function actionUrl(template: string, record: Record<string, unknown>): string {
+    return template.replace(/\{([^}]+)\}/g, (_, key: string) => String(record[key] ?? ''));
 }
 
 export function ModularTable({ table }: { table: Table }) {
@@ -129,10 +135,11 @@ export function ModularTable({ table }: { table: Table }) {
                                         {column.sortable ? <button type="button" onClick={() => sort(column)} className="modular-sort-button">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}
                                     </th>
                                 ))}
+                                {table.actions.length > 0 && <th className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">Actions</th>}
                             </tr>
                         </thead>
                             <tbody className="divide-y">
-                            {table.records.length === 0 ? <tr><td className="px-6 py-10 text-center" colSpan={table.columns.length}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index} className="transition">{table.columns.map((column) => <td className="whitespace-nowrap px-6 py-5" key={column.name}>{String(record[column.name] ?? '')}</td>)}</tr>)}
+                            {table.records.length === 0 ? <tr><td className="px-6 py-10 text-center" colSpan={table.columns.length + (table.actions.length > 0 ? 1 : 0)}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index} className="transition">{table.columns.map((column) => <td className="whitespace-nowrap px-6 py-5" key={column.name}>{String(record[column.name] ?? '')}</td>)}{table.actions.length > 0 && <td className="whitespace-nowrap px-6 py-5"><div className="flex gap-2">{table.actions.map((action) => action.url && <button key={action.name} type="button" className="modular-action-button" onClick={() => { if (action.confirm && !window.confirm(action.confirm)) return; const url = actionUrl(action.url!, record); router.visit(url, action.method === 'GET' ? {} : { method: action.method.toLowerCase() as 'post' | 'put' | 'patch' | 'delete' }); }}>{action.label}</button>)}</div></td>}</tr>)}
                         </tbody>
                     </table>
                 </div>

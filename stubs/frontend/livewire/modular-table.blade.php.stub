@@ -1,10 +1,13 @@
-<table>
-    <thead><tr>@foreach ($table['columns'] as $column)<th>{{ $column['label'] }}</th>@endforeach</tr></thead>
-    <tbody>
-        @forelse ($table['records'] as $record)
-            <tr>@foreach ($table['columns'] as $column)<td>{{ $record[$column['name']] ?? '' }}</td>@endforeach</tr>
-        @empty
-            <tr><td colspan="{{ count($table['columns']) }}">{{ $table['emptyMessage'] }}</td></tr>
-        @endforelse
-    </tbody>
-</table>
+<div class="modular-table-wrapper">
+    <form wire:submit="apply" class="modular-table-controls">
+        @if ($table['controls']['searchable'])<input wire:model="search" name="search" type="search" placeholder="Search...">@endif
+        @foreach ($table['filters'] as $filter)
+            <select wire:model="filters.{{ $filter['name'] }}" name="filters[{{ $filter['name'] }}]"><option value="">Any {{ $filter['label'] }}</option>@foreach ($filter['options'] ?? [] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
+        @endforeach
+        <button type="submit">Filter</button>
+    </form>
+    <table><thead><tr>@foreach ($table['columns'] as $column)<th scope="col">{{ $column['label'] }}</th>@endforeach@if (count($table['actions']))<th scope="col">Actions</th>@endif</tr></thead>
+        <tbody>@forelse ($table['records'] as $record)<tr>@foreach ($table['columns'] as $column)<td>{{ $record[$column['name']] ?? '' }}</td>@endforeach@if (count($table['actions']))<td>@foreach ($table['actions'] as $action)<button type="button" wire:click="runAction('{{ $action['name'] }}', {{ $record['id'] ?? 'null' }})">{{ $action['label'] }}</button>@endforeach</td>@endif</tr>@empty<tr><td colspan="{{ count($table['columns']) + (count($table['actions']) ? 1 : 0) }}">{{ $table['emptyMessage'] }}</td></tr>@endforelse</tbody>
+    </table>
+    @if ($table['pagination'])<nav aria-label="Pagination"><span>Showing {{ $table['pagination']['from'] ?? 0 }}-{{ $table['pagination']['to'] ?? 0 }} of {{ $table['pagination']['total'] }}</span><button wire:click="previousPage" @disabled(!$table['pagination']['prevUrl'])>Previous</button><button wire:click="nextPage" @disabled(!$table['pagination']['nextUrl'])>Next</button></nav>@endif
+</div>

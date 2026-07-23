@@ -53,7 +53,7 @@
     "scripts": {
         "test": "phpunit",
         "lint": "pint --test",
-        "analyse": "phpstan analyse"
+        "analyse": "phpstan analyse src tests --no-progress --debug --memory-limit=512M"
     },
     "minimum-stability": "dev",
     "prefer-stable": true

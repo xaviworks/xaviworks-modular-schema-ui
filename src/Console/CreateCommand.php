@@ -15,6 +15,7 @@ final class CreateCommand extends Command
         {--model= : The Eloquent model class, defaults to App\\Models\\{name}}
         {--table= : The database table, defaults to the plural snake-case resource name}
         {--frontend= : Frontend adapter: blade, react, vue, or livewire}
+        {--authorize : Add Laravel policy authorization calls to the generated controller}
         {--force : Replace existing generated files}';
 
     protected $description = 'Create a modular resource from an existing Eloquent model and database table';
@@ -73,7 +74,13 @@ final class CreateCommand extends Command
         ];
 
         $controllerPath = app_path("Http/Controllers/{$controllerClass}.php");
-        $filesToWrite[$controllerPath] = $this->addValidationToController($filesToWrite[$controllerPath], $schemaClass);
+        $controller = $this->addTableStateToController(
+            $this->addValidationToController($filesToWrite[$controllerPath], $schemaClass),
+            $schemaClass,
+        );
+        $filesToWrite[$controllerPath] = $this->option('authorize')
+            ? $this->addAuthorizationToController($controller, class_basename($model))
+            : $controller;
 
         if ($frontend === 'react') {
             $filesToWrite[resource_path("js/pages/{$resourceSlug}/index.tsx")] = $this->reactIndexCode($resource);
@@ -110,6 +117,7 @@ final class CreateCommand extends Command
         $columnLines = [];
         $filterImports = [];
         $filterLines = [];
+        $actionImports = ['use XaviWorks\\ModularSchemaUi\\Tables\\Action;'];
 
         foreach ($columns as $column) {
             $columnName = $column;
@@ -141,18 +149,24 @@ final class CreateCommand extends Command
             }
         }
 
+        $actionLines = [
+            "            Action::make('edit')->url('/".Str::kebab(Str::pluralStudly(str_replace('Schema', '', $schemaClass)))."/{id}'),",
+            "            Action::make('delete')->httpMethod('DELETE')->url('/".Str::kebab(Str::pluralStudly(str_replace('Schema', '', $schemaClass)))."/{id}')->confirm('Delete this record?'),",
+        ];
+
         $fieldImports = array_values(array_unique($fieldImports));
         $columnImports = array_values(array_unique($columnImports));
         $filterImports = array_values(array_unique($filterImports));
 
         return "<?php\n\nnamespace App\\Modular\\".Str::pluralStudly(str_replace('Schema', '', $schemaClass)).";\n\n".
             implode("\n", $fieldImports)."\n".implode("\n", $columnImports)."\n".implode("\n", $filterImports)."\n".
+            implode("\n", $actionImports)."\n".
             "use XaviWorks\\ModularSchemaUi\\Resources\\ResourceSchema;\n\n".
             "final class {$schemaClass} extends ResourceSchema\n{\n".
             "    public function form(Form \$form): Form\n    {\n        return \$form->fields([\n".
             implode("\n", $fieldLines)."\n        ]);\n    }\n\n".
             "    public function table(Table \$table): Table\n    {\n        return \$table->columns([\n".
-            implode("\n", $columnLines)."\n        ])->filters([\n".implode("\n", $filterLines)."\n        ]);\n    }\n}\n";
+            implode("\n", $columnLines)."\n        ])->filters([\n".implode("\n", $filterLines)."\n        ])->actions([\n".implode("\n", $actionLines)."\n        ]);\n    }\n}\n";
     }
 
     /** @param list<string> $imports */
@@ -161,9 +175,10 @@ final class CreateCommand extends Command
         $class = match ($type) {
             'text', 'mediumText', 'longText' => 'Textarea',
             'boolean' => 'Select',
-            default => in_array($type, ['date', 'datetime', 'datetimetz', 'timestamp'], true)
-                ? 'Text'
-                : (str_contains(strtolower($column), 'email') ? 'Email' : (str_contains(strtolower($column), 'password') ? 'Password' : 'Text')),
+            'date' => 'Date',
+            'datetime', 'datetimetz', 'timestamp' => 'DateTime',
+            'integer', 'bigint', 'smallint', 'decimal', 'double', 'float' => 'Number',
+            default => str_contains(strtolower($column), 'email') ? 'Email' : (str_contains(strtolower($column), 'password') ? 'Password' : 'Text'),
         };
 
         $imports[] = "use XaviWorks\\ModularSchemaUi\\Forms\\Fields\\{$class};";
@@ -251,6 +266,50 @@ final class CreateCommand extends Command
             fn (array $match): string => $match['indent']
                 .'$validated = $request->validate((new '.$schemaClass.')->validationRules());'."\n"
                 .$match['indent'].'$'.$match['model'].'->update($validated);',
+            $source,
+        ) ?? $source;
+    }
+
+    private function addTableStateToController(string $source, string $schemaClass): string
+    {
+        $source = preg_replace(
+            '/RequestState::from\(\$request->all\(\), .*?\)\)/s',
+            '$state)',
+            $source,
+            1,
+        ) ?? $source;
+
+        $source = str_replace('$state));', '$state);', $source);
+
+        return preg_replace(
+            '/(?<indent>\s+)\$schema = new '.preg_quote($schemaClass, '/').';/',
+            '$1$schema = new '.$schemaClass.";\n".
+                '$1$tableDefinition = $schema->resolveTableDefinition();'."\n".
+                '$1$state = RequestState::from($request->all(), $tableDefinition->sortableColumnNames(), $tableDefinition->filterNames());',
+            $source,
+            1,
+        ) ?? $source;
+    }
+
+    private function addAuthorizationToController(string $source, string $model): string
+    {
+        $source = str_replace(
+            "    public function create(): Response\n    {\n",
+            "    public function create(): Response\n    {\n        \$this->authorize('create', {$model}::class);\n",
+            $source,
+        );
+
+        $source = preg_replace(
+            '/(?<method>public function store\([^\n]+\): RedirectResponse)(?<body>\n    \{)/',
+            '$1$2'."\n        ".'$this->authorize(\'create\', '.$model.'::class);',
+            $source,
+        ) ?? $source;
+
+        return preg_replace_callback(
+            '/(?<method>public function (?:edit|update|destroy)\([^\n]+\)(?:\: Response|\: RedirectResponse))(?<body>\n    \{)/',
+            fn (array $match): string => $match['method'].$match['body']."\n        \$this->authorize('".
+                (str_contains($match['method'], 'destroy') ? 'delete' : 'update')."', \$".
+                Str::camel($model).');',
             $source,
         ) ?? $source;
     }

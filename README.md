@@ -63,6 +63,38 @@ resource created with `php artisan modular:create` uses that map in its
 generated `store` and `update` actions. React/Inertia forms also display the
 validation errors returned by Laravel.
 
+## Table actions and authorization
+
+Tables can expose frontend-neutral row actions. The `{id}` placeholder is
+replaced by the record key by the adapters:
+
+```php
+use XaviWorks\ModularSchemaUi\Tables\Action;
+
+return $table->actions([
+    Action::make('edit')->url('/users/{id}'),
+    Action::make('delete')
+        ->httpMethod('DELETE')
+        ->url('/users/{id}')
+        ->confirm('Delete this record?'),
+]);
+```
+
+Generated resources include Edit and Delete actions automatically. Add
+`--authorize` when creating a resource to add Laravel policy calls for create,
+update, and delete:
+
+```bash
+php artisan modular:create User --table=users --frontend=react --authorize
+```
+
+Create the corresponding policy in the host application before using that
+option. Authorization remains application-owned because every project has
+different access rules.
+
+The shared field API includes `Date`, `DateTime`, `Number`, and `Checkbox`, in
+addition to text, email, password, select, textarea, and hidden fields.
+
 ## Use it with React/Inertia
 
 ```php

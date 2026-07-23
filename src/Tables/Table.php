@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi\Tables;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use XaviWorks\ModularSchemaUi\Contracts\Action as ActionContract;
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
 use XaviWorks\ModularSchemaUi\State\RequestState;
@@ -19,6 +20,9 @@ final class Table
     /** @var Collection<int, FilterContract> */
     private Collection $filters;
 
+    /** @var Collection<int, ActionContract> */
+    private Collection $actions;
+
     private string $emptyMessage = 'No records found.';
 
     private ?LengthAwarePaginator $paginator = null;
@@ -33,6 +37,7 @@ final class Table
         $this->columns = collect();
         $this->records = collect();
         $this->filters = collect();
+        $this->actions = collect();
     }
 
     public static function make(): self
@@ -86,6 +91,14 @@ final class Table
     public function filters(array $filters): self
     {
         $this->filters = collect($filters);
+
+        return $this;
+    }
+
+    /** @param array<int, ActionContract> $actions */
+    public function actions(array $actions): self
+    {
+        $this->actions = collect($actions);
 
         return $this;
     }
@@ -151,6 +164,12 @@ final class Table
         return $this->filters;
     }
 
+    /** @return Collection<int, ActionContract> */
+    public function getActions(): Collection
+    {
+        return $this->actions;
+    }
+
     /** @return list<string> */
     public function filterNames(): array
     {
@@ -175,6 +194,10 @@ final class Table
                 $values[$column->name()] = method_exists($column, 'valueFor')
                     ? $column->valueFor($record)
                     : data_get($record, $column->name());
+            }
+
+            if (data_get($record, 'id') !== null) {
+                $values['id'] = data_get($record, 'id');
             }
 
             return $values;
@@ -204,6 +227,10 @@ final class Table
                         'type' => $filter->type(),
                         'options' => $filter->optionValues(),
                     ])
+                ->values()
+                ->all(),
+            'actions' => $this->actions
+                ->map(fn (ActionContract $action): array => $action->toArray())
                 ->values()
                 ->all(),
             'records' => $records,
