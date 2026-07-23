@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ form: { fields: Array<{ name: string; label: string; type: string; required: boolean; options?: Record<string, string> }> ; values: Record<string, unknown> } }>();
+defineProps<{ form: { fields: Array<{ name: string; label: string; type: string; required: boolean; options?: Record<string, string> }>; values: Record<string, unknown> } }>();
 </script>
 
 <template>

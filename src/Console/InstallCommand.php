@@ -42,7 +42,8 @@ final class InstallCommand extends Command
         }
 
         foreach ($files->allFiles($source) as $file) {
-            $target = $destination.'/'.str_replace($source.'/', '', $file->getPathname());
+            $relativePath = str_replace($source.'/', '', $file->getPathname());
+            $target = $destination.'/'.str_replace('.stub', '', $relativePath);
 
             if ($files->exists($target) && ! $this->option('force')) {
                 $this->warn("Skipped existing file: {$target} (use --force to replace)");
