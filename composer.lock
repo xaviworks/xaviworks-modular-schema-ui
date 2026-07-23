@@ -6004,9 +6004,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/modular-schema-ui",
-                "reference": "3b61728d9358a38919232dac85e07be6abc0770b"
+                "reference": "c7ed2d70d2bb6238d3231fc518d4f2a7f39b40e3"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "illuminate/view": "^13.0",
                 "php": "^8.3"

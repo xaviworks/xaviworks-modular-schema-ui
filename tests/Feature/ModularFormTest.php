@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Hidden;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Password;
@@ -7,6 +8,7 @@ use XaviWorks\ModularSchemaUi\Forms\Fields\Select;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Textarea;
 use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Query\QueryPipeline;
 use XaviWorks\ModularSchemaUi\State\RequestState;
 use XaviWorks\ModularSchemaUi\Tables\Columns\BooleanColumn;
 use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
@@ -150,4 +152,27 @@ it('normalizes only allowlisted modular sort state', function (): void {
 
     expect($invalid->sort())->toBeNull()
         ->and($invalid->direction())->toBe('asc');
+});
+
+it('applies only allowlisted modular sorting to a query', function (): void {
+    $table = Table::make()->columns([
+        TextColumn::make('name')->sortable(),
+        TextColumn::make('email'),
+    ]);
+
+    $query = QueryPipeline::make()->sort(
+        DB::query()->from('users'),
+        $table,
+        RequestState::from(['sort' => 'name', 'direction' => 'desc'], $table->sortableColumnNames()),
+    );
+
+    expect($query->toSql())->toContain('order by "name" desc');
+
+    $untrustedQuery = QueryPipeline::make()->sort(
+        DB::query()->from('users'),
+        $table,
+        RequestState::from(['sort' => 'email', 'direction' => 'desc'], $table->sortableColumnNames()),
+    );
+
+    expect($untrustedQuery->toSql())->not->toContain('order by');
 });
