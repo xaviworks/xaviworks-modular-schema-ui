@@ -8,6 +8,8 @@ abstract class Column implements ColumnContract
 {
     protected string $label;
 
+    protected bool $sortable = false;
+
     public function __construct(protected string $name)
     {
         $this->label = str($name)->headline()->toString();
@@ -33,6 +35,18 @@ abstract class Column implements ColumnContract
     public function labelText(): string
     {
         return $this->label;
+    }
+
+    public function sortable(bool $sortable = true): static
+    {
+        $this->sortable = $sortable;
+
+        return $this;
+    }
+
+    public function isSortable(): bool
+    {
+        return $this->sortable;
     }
 
     protected function valueFrom(mixed $record): mixed

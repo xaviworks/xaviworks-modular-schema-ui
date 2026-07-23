@@ -7,6 +7,7 @@ use XaviWorks\ModularSchemaUi\Forms\Fields\Select;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Textarea;
 use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\State\RequestState;
 use XaviWorks\ModularSchemaUi\Tables\Columns\BooleanColumn;
 use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
 use XaviWorks\ModularSchemaUi\Tables\Table;
@@ -124,4 +125,29 @@ it('renders a modular table empty state', function (): void {
 
     $this->view('modular-table-test', compact('table'))
         ->assertSee('No users are available.');
+});
+
+it('normalizes only allowlisted modular sort state', function (): void {
+    $table = Table::make()->columns([
+        TextColumn::make('name')->sortable(),
+        TextColumn::make('email'),
+    ]);
+
+    expect($table->sortableColumnNames())->toBe(['name']);
+
+    $valid = RequestState::from([
+        'sort' => 'name',
+        'direction' => 'DESC',
+    ], $table->sortableColumnNames());
+
+    expect($valid->sort())->toBe('name')
+        ->and($valid->direction())->toBe('desc');
+
+    $invalid = RequestState::from([
+        'sort' => 'email',
+        'direction' => 'sideways',
+    ], $table->sortableColumnNames());
+
+    expect($invalid->sort())->toBeNull()
+        ->and($invalid->direction())->toBe('asc');
 });

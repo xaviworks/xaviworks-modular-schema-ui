@@ -10,5 +10,7 @@ interface Column
 
     public function type(): string;
 
+    public function isSortable(): bool;
+
     public function displayValue(mixed $record): string;
 }
