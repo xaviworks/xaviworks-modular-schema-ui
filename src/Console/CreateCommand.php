@@ -130,6 +130,11 @@ final class CreateCommand extends Command
                 $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\BooleanFilter;';
                 $filterLines[] = "            BooleanFilter::make({$column}),";
             }
+
+            if (str_ends_with(strtolower(trim($column, "'")), '_verified_at')) {
+                $filterImports[] = 'use XaviWorks\\ModularSchemaUi\\Tables\\Filters\\PresenceFilter;';
+                $filterLines[] = "            PresenceFilter::make({$column}),";
+            }
         }
 
         $fieldImports = array_values(array_unique($fieldImports));
