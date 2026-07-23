@@ -16,10 +16,10 @@ adapters for React, Vue, and Livewire.
 
 ## Installation
 
-For the development branch:
+Install the package:
 
 ```bash
-composer require xaviworks/modular-schema-ui:dev-main
+composer require xaviworks/modular-schema-ui
 php artisan modular:install --frontend=react
 ```
 
