@@ -12,6 +12,14 @@ abstract class Field implements FieldContract
 
     protected mixed $defaultValue = null;
 
+    protected ?string $placeholder = null;
+
+    protected ?string $help = null;
+
+    protected bool $readonly = false;
+
+    protected bool $disabled = false;
+
     /** @var array<string, mixed> */
     protected array $attributes = [];
 
@@ -42,6 +50,34 @@ abstract class Field implements FieldContract
     public function default(mixed $value): static
     {
         $this->defaultValue = $value;
+
+        return $this;
+    }
+
+    public function placeholder(string $placeholder): static
+    {
+        $this->placeholder = $placeholder;
+
+        return $this;
+    }
+
+    public function helpText(string $help): static
+    {
+        $this->help = $help;
+
+        return $this;
+    }
+
+    public function readonly(bool $readonly = true): static
+    {
+        $this->readonly = $readonly;
+
+        return $this;
+    }
+
+    public function disabled(bool $disabled = true): static
+    {
+        $this->disabled = $disabled;
 
         return $this;
     }
@@ -83,6 +119,26 @@ abstract class Field implements FieldContract
     public function defaultValue(): mixed
     {
         return $this->defaultValue;
+    }
+
+    public function placeholderText(): ?string
+    {
+        return $this->placeholder;
+    }
+
+    public function helpTextValue(): ?string
+    {
+        return $this->help;
+    }
+
+    public function isReadonly(): bool
+    {
+        return $this->readonly;
+    }
+
+    public function isDisabled(): bool
+    {
+        return $this->disabled;
     }
 
     /** @return array<string, mixed> */

@@ -74,3 +74,24 @@ it('resolves model values and field defaults without populating passwords', func
         ->assertSee('value="Default value"', false)
         ->assertDontSee('never-render-this');
 });
+
+it('renders accessible modular field descriptions and states', function (): void {
+    $form = Form::make()->fields([
+        Text::make('name')
+            ->placeholder('Your full name')
+            ->helpText('Use the name shown on official records.')
+            ->readonly()
+            ->disabled(),
+    ]);
+
+    $response = $this->withViewErrors(['name' => 'Your name is required.'])
+        ->view('modular-form-test', compact('form'));
+
+    $response->assertSee('placeholder="Your full name"', false)
+        ->assertSee('readonly', false)
+        ->assertSee('disabled', false)
+        ->assertSee('modular-name-help')
+        ->assertSee('modular-name-error')
+        ->assertSee('aria-invalid="true"', false)
+        ->assertSee('Your name is required.');
+});

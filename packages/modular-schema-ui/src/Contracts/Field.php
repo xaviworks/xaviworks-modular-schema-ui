@@ -17,6 +17,14 @@ interface Field
 
     public function defaultValue(): mixed;
 
+    public function placeholderText(): ?string;
+
+    public function helpTextValue(): ?string;
+
+    public function isReadonly(): bool;
+
+    public function isDisabled(): bool;
+
     public function isRequired(): bool;
 
     /** @return array<string, mixed> */
