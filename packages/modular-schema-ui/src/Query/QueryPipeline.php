@@ -23,4 +23,23 @@ final class QueryPipeline
 
         return $query->orderBy($sort, $state->direction());
     }
+
+    public function search(Builder $query, Table $table, RequestState $state): Builder
+    {
+        $search = $state->search();
+        $columns = $table->searchableColumnNames();
+
+        if ($search === null || $columns === []) {
+            return $query;
+        }
+
+        $search = addcslashes($search, '%_\\');
+
+        return $query->where(function (Builder $query) use ($columns, $search): void {
+            foreach ($columns as $index => $column) {
+                $method = $index === 0 ? 'where' : 'orWhere';
+                $query->{$method}($column, 'like', "%{$search}%");
+            }
+        });
+    }
 }

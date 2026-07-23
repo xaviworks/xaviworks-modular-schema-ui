@@ -12,5 +12,7 @@ interface Column
 
     public function isSortable(): bool;
 
+    public function isSearchable(): bool;
+
     public function displayValue(mixed $record): string;
 }

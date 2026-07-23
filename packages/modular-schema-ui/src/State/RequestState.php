@@ -7,6 +7,7 @@ final class RequestState
     private function __construct(
         private readonly ?string $sort,
         private readonly string $direction,
+        private readonly ?string $search,
     ) {}
 
     /** @param list<string> $sortableColumns */
@@ -23,7 +24,15 @@ final class RequestState
             ? $requestedDirection
             : 'asc';
 
-        return new self($sort, $direction);
+        $requestedSearch = is_string($input['search'] ?? null)
+            ? trim($input['search'])
+            : null;
+
+        $search = $requestedSearch === null || $requestedSearch === ''
+            ? null
+            : mb_substr($requestedSearch, 0, 200);
+
+        return new self($sort, $direction, $search);
     }
 
     public function sort(): ?string
@@ -34,5 +43,10 @@ final class RequestState
     public function direction(): string
     {
         return $this->direction;
+    }
+
+    public function search(): ?string
+    {
+        return $this->search;
     }
 }

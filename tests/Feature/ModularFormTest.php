@@ -176,3 +176,30 @@ it('applies only allowlisted modular sorting to a query', function (): void {
 
     expect($untrustedQuery->toSql())->not->toContain('order by');
 });
+
+it('applies grouped search only to searchable modular columns', function (): void {
+    $table = Table::make()->columns([
+        TextColumn::make('name')->searchable(),
+        TextColumn::make('email')->searchable(),
+        TextColumn::make('secret'),
+    ]);
+
+    expect($table->searchableColumnNames())->toBe(['name', 'email']);
+
+    $state = RequestState::from([
+        'search' => '  Junn%  ',
+    ], $table->sortableColumnNames());
+
+    expect($state->search())->toBe('Junn%');
+
+    $query = QueryPipeline::make()->search(
+        DB::query()->from('users'),
+        $table,
+        $state,
+    );
+
+    expect($query->toSql())->toContain('"name" like ?')
+        ->and($query->toSql())->toContain('"email" like ?')
+        ->and($query->toSql())->not->toContain('"secret"')
+        ->and($query->getBindings())->toBe(['%Junn\\%%', '%Junn\\%%']);
+});

@@ -10,6 +10,8 @@ abstract class Column implements ColumnContract
 
     protected bool $sortable = false;
 
+    protected bool $searchable = false;
+
     public function __construct(protected string $name)
     {
         $this->label = str($name)->headline()->toString();
@@ -47,6 +49,18 @@ abstract class Column implements ColumnContract
     public function isSortable(): bool
     {
         return $this->sortable;
+    }
+
+    public function searchable(bool $searchable = true): static
+    {
+        $this->searchable = $searchable;
+
+        return $this;
+    }
+
+    public function isSearchable(): bool
+    {
+        return $this->searchable;
     }
 
     protected function valueFrom(mixed $record): mixed

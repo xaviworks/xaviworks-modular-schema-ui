@@ -71,6 +71,16 @@ final class Table
             ->all();
     }
 
+    /** @return list<string> */
+    public function searchableColumnNames(): array
+    {
+        return $this->columns
+            ->filter(fn (ColumnContract $column): bool => $column->isSearchable())
+            ->map(fn (ColumnContract $column): string => $column->name())
+            ->values()
+            ->all();
+    }
+
     public function emptyStateMessage(): string
     {
         return $this->emptyMessage;
