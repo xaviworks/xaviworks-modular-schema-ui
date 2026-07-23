@@ -7,6 +7,9 @@ use XaviWorks\ModularSchemaUi\Forms\Fields\Select;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Textarea;
 use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Tables\Columns\BooleanColumn;
+use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
+use XaviWorks\ModularSchemaUi\Tables\Table;
 
 it('renders a modular form with escaped values and csrf protection', function (): void {
     $form = Form::make()->fields([
@@ -94,4 +97,31 @@ it('renders accessible modular field descriptions and states', function (): void
         ->assertSee('modular-name-error')
         ->assertSee('aria-invalid="true"', false)
         ->assertSee('Your name is required.');
+});
+
+it('renders modular table rows and boolean values', function (): void {
+    $table = Table::make()
+        ->records([
+            ['name' => 'Junn Xavier', 'active' => true],
+        ])
+        ->columns([
+            TextColumn::make('name'),
+            BooleanColumn::make('active'),
+        ]);
+
+    $response = $this->view('modular-table-test', compact('table'));
+
+    $response->assertSee('<table', false)
+        ->assertSee('Junn Xavier')
+        ->assertSee('Yes')
+        ->assertSee('scope="col"', false);
+});
+
+it('renders a modular table empty state', function (): void {
+    $table = Table::make()
+        ->emptyMessage('No users are available.')
+        ->columns([TextColumn::make('name')]);
+
+    $this->view('modular-table-test', compact('table'))
+        ->assertSee('No users are available.');
 });
