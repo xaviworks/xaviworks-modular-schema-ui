@@ -1,10 +1,10 @@
 type Column = { name: string; label: string };
 
 export function ModularTable({ table }: { table: { columns: Column[]; records: Array<Record<string, unknown>>; emptyMessage: string } }) {
-    return <table>
-        <thead><tr>{table.columns.map((column) => <th key={column.name}>{column.label}</th>)}</tr></thead>
-        <tbody>
-            {table.records.length === 0 ? <tr><td colSpan={table.columns.length}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index}>{table.columns.map((column) => <td key={column.name}>{String(record[column.name] ?? '')}</td>)}</tr>)}
+    return <div className="overflow-x-auto rounded-md border border-gray-200 dark:border-gray-800"><table className="min-w-full divide-y divide-gray-200 text-left text-sm dark:divide-gray-800">
+        <thead className="bg-gray-50 dark:bg-gray-900"><tr>{table.columns.map((column) => <th key={column.name} className="px-4 py-3 font-semibold">{column.label}</th>)}</tr></thead>
+        <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            {table.records.length === 0 ? <tr><td className="px-4 py-6 text-center text-gray-500" colSpan={table.columns.length}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index}>{table.columns.map((column) => <td className="whitespace-nowrap px-4 py-3" key={column.name}>{String(record[column.name] ?? '')}</td>)}</tr>)}
         </tbody>
-    </table>;
+    </table></div>;
 }
