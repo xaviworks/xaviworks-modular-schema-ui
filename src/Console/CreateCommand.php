@@ -166,16 +166,17 @@ final class CreateCommand extends Command
     private function reactFormPageCode(string $resource, string $mode): string
     {
         $resourceSlug = Str::kebab(Str::pluralStudly($resource));
-        $props = $mode === 'edit' ? ', '.Str::camel($resource).'?: { id: number }' : '';
-        $url = $mode === 'edit' ? "'/{$resourceSlug}/' + {$this->resourceVariable($resource)}?.id" : "'/{$resourceSlug}'";
+        $resourceVariable = $this->resourceVariable($resource);
+        $props = $mode === 'edit' ? ", {$resourceVariable}?: { id: number }" : '';
+        $url = $mode === 'edit' ? "'/{$resourceSlug}/' + {$resourceVariable}?.id" : "'/{$resourceSlug}'";
         $method = $mode === 'edit' ? 'put' : 'post';
 
-        return "import { Head, router } from '@inertiajs/react';\nimport { ModularForm } from '@/components/modular/ModularForm';\n\nexport default function ".Str::studly($mode)."({ form{$props} }: { form: Parameters<typeof ModularForm>[0]['form']; ".Str::camel($resource)."?: { id: number } }) {\n    return <><Head title=\"{$mode} {$resource}\" /><ModularForm form={form} onSubmit={(event) => { event.preventDefault(); router->{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget))); }} /></>;\n}\n";
+        return "import { Head, router } from '@inertiajs/react';\nimport { ModularForm } from '@/components/modular/ModularForm';\n\nexport default function ".Str::studly($mode)."({ form{$props} }: { form: Parameters<typeof ModularForm>[0]['form']; {$resourceVariable}?: { id: number } }) {\n    return <><Head title=\"{$mode} {$resource}\" /><ModularForm form={form} onSubmit={(event) => { event.preventDefault(); router->{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget))); }} /></>;\n}\n";
     }
 
     private function resourceVariable(string $resource): string
     {
-        return Str::camel($resource);
+        return Str::camel(Str::singular($resource));
     }
 
     private function appendRouteLoader(Filesystem $files): void
