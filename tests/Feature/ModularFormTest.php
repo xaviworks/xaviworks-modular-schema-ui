@@ -12,6 +12,8 @@ use XaviWorks\ModularSchemaUi\Query\QueryPipeline;
 use XaviWorks\ModularSchemaUi\State\RequestState;
 use XaviWorks\ModularSchemaUi\Tables\Columns\BooleanColumn;
 use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
+use XaviWorks\ModularSchemaUi\Tables\Filters\BooleanFilter;
+use XaviWorks\ModularSchemaUi\Tables\Filters\SelectFilter;
 use XaviWorks\ModularSchemaUi\Tables\Table;
 
 it('renders a modular form with escaped values and csrf protection', function (): void {
@@ -202,4 +204,38 @@ it('applies grouped search only to searchable modular columns', function (): voi
         ->and($query->toSql())->toContain('"email" like ?')
         ->and($query->toSql())->not->toContain('"secret"')
         ->and($query->getBindings())->toBe(['%Junn\\%%', '%Junn\\%%']);
+});
+
+it('applies only allowlisted modular filters to a query', function (): void {
+    $table = Table::make()
+        ->filters([
+            SelectFilter::make('role')->options([
+                'admin' => 'Administrator',
+                'user' => 'User',
+            ]),
+            BooleanFilter::make('active'),
+        ]);
+
+    $state = RequestState::from([
+        'filters' => [
+            'role' => 'admin',
+            'active' => 'true',
+            'secret' => 'ignored',
+        ],
+    ], [], $table->filterNames());
+
+    expect($state->filters())->toBe([
+        'role' => 'admin',
+        'active' => 'true',
+    ]);
+
+    $query = QueryPipeline::make()->filters(
+        DB::query()->from('users'),
+        $table,
+        $state,
+    );
+
+    expect($query->toSql())->toContain('"role" = ?')
+        ->and($query->toSql())->toContain('"active" = ?')
+        ->and($query->getBindings())->toBe(['admin', true]);
 });

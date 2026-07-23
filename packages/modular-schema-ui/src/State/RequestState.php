@@ -8,10 +8,13 @@ final class RequestState
         private readonly ?string $sort,
         private readonly string $direction,
         private readonly ?string $search,
+        /** @var array<string, scalar> */
+        private readonly array $filters,
     ) {}
 
     /** @param list<string> $sortableColumns */
-    public static function from(array $input, array $sortableColumns): self
+    /** @param list<string> $sortableColumns @param list<string> $filterNames */
+    public static function from(array $input, array $sortableColumns, array $filterNames = []): self
     {
         $requestedSort = is_string($input['sort'] ?? null) ? $input['sort'] : null;
         $sort = in_array($requestedSort, $sortableColumns, true) ? $requestedSort : null;
@@ -32,7 +35,18 @@ final class RequestState
             ? null
             : mb_substr($requestedSearch, 0, 200);
 
-        return new self($sort, $direction, $search);
+        $requestedFilters = is_array($input['filters'] ?? null) ? $input['filters'] : [];
+        $filters = [];
+
+        foreach ($filterNames as $filterName) {
+            $value = $requestedFilters[$filterName] ?? null;
+
+            if (is_scalar($value) && (string) $value !== '') {
+                $filters[$filterName] = $value;
+            }
+        }
+
+        return new self($sort, $direction, $search, $filters);
     }
 
     public function sort(): ?string
@@ -48,5 +62,11 @@ final class RequestState
     public function search(): ?string
     {
         return $this->search;
+    }
+
+    /** @return array<string, scalar> */
+    public function filters(): array
+    {
+        return $this->filters;
     }
 }

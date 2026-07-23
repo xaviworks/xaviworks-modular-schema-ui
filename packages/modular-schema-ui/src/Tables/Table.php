@@ -4,6 +4,7 @@ namespace XaviWorks\ModularSchemaUi\Tables;
 
 use Illuminate\Support\Collection;
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
+use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
 
 final class Table
 {
@@ -13,12 +14,16 @@ final class Table
     /** @var Collection<int, mixed> */
     private Collection $records;
 
+    /** @var Collection<int, FilterContract> */
+    private Collection $filters;
+
     private string $emptyMessage = 'No records found.';
 
     public function __construct()
     {
         $this->columns = collect();
         $this->records = collect();
+        $this->filters = collect();
     }
 
     public static function make(): self
@@ -38,6 +43,14 @@ final class Table
     public function records(iterable $records): self
     {
         $this->records = collect($records);
+
+        return $this;
+    }
+
+    /** @param array<int, FilterContract> $filters */
+    public function filters(array $filters): self
+    {
+        $this->filters = collect($filters);
 
         return $this;
     }
@@ -77,6 +90,21 @@ final class Table
         return $this->columns
             ->filter(fn (ColumnContract $column): bool => $column->isSearchable())
             ->map(fn (ColumnContract $column): string => $column->name())
+            ->values()
+            ->all();
+    }
+
+    /** @return Collection<int, FilterContract> */
+    public function getFilters(): Collection
+    {
+        return $this->filters;
+    }
+
+    /** @return list<string> */
+    public function filterNames(): array
+    {
+        return $this->filters
+            ->map(fn (FilterContract $filter): string => $filter->name())
             ->values()
             ->all();
     }
