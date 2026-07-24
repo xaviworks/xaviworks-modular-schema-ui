@@ -129,6 +129,73 @@ $validated = $request->validate((new UserSchema)->validationRules());
 React and Vue adapters display Laravel validation errors returned through
 Inertia. The Blade and Livewire adapters use their host framework error bags.
 
+The same field definition also exposes normalized frontend metadata:
+
+```php
+$field = Text::make('name')->required()->maxLength(255);
+
+$field->toArray()['validation'];
+// ['required' => true, 'nullable' => false, 'maxLength' => 255]
+```
+
+Laravel validation remains authoritative. Use a `FormRequest` for rules that
+depend on authorization, database state, or custom business logic.
+
+## Multiple forms and tables
+
+For a feature with several screens, group named definitions in one `UiSchema`
+class instead of creating a separate class for every small form:
+
+```php
+use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Resources\UiSchema;
+use XaviWorks\ModularSchemaUi\Tables\Table;
+
+final class ReservationUi extends UiSchema
+{
+    public function createForm(Form $form): Form
+    {
+        return $form->fields(
+            Select::make('room_id')->required(),
+            Date::make('check_in')->required(),
+            Date::make('check_out')->required(),
+        );
+    }
+
+    public function archiveTable(Table $table): Table
+    {
+        return $table->columns(
+            TextColumn::make('reference')->searchable(),
+            TextColumn::make('archived_at'),
+        );
+    }
+}
+```
+
+Resolve them with `resolveForm('create')` and `resolveTable('archive')`.
+Use `ResourceSchema` for a simple one-form/one-table CRUD resource.
+
+## Upgrading the declaration style
+
+The array form remains supported:
+
+```php
+$form->fields([
+    Text::make('name'),
+]);
+```
+
+For new code, direct declarations are shorter:
+
+```php
+$form->fields(
+    Text::make('name'),
+);
+```
+
+The same shortcut is available for `Form::make(...)`, `Table::make(...)`,
+`Table::columns(...)`, `Table::filters(...)`, and `Table::actions(...)`.
+
 ## Define a table
 
 ```php

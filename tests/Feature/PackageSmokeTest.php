@@ -5,6 +5,7 @@ namespace XaviWorks\ModularSchemaUi\Tests\Feature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use LogicException;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Date;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Number;
@@ -153,6 +154,16 @@ final class PackageSmokeTest extends TestCase
         $this->assertTrue($ui->resolveForm('create')->toArray()['fields'][0]['required']);
         $this->assertSame('name', $ui->resolveTable()->toArray()['columns'][0]['name']);
         $this->assertSame('archived_at', $ui->resolveTable('archive')->toArray()['columns'][0]['name']);
+    }
+
+    public function test_a_missing_named_definition_has_a_clear_error(): void
+    {
+        $ui = new class extends UiSchema {};
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('UI form [missing] is not defined');
+
+        $ui->resolveForm('missing');
     }
 
     public function test_install_command_can_select_a_react_adapter_without_writing_files(): void
