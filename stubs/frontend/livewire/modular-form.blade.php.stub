@@ -5,9 +5,9 @@
             @if ($field['type'] === 'select')
                 <select id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" @required($field['required'])><option value="">Select {{ $field['label'] }}</option>@foreach ($field['options'] ?? [] as $value => $label)<option value="{{ $value }}">{{ $label }}</option>@endforeach</select>
             @elseif ($field['type'] === 'textarea')
-                <textarea id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" @required($field['required'])></textarea>
+                <textarea id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" @required($field['validation']['required'] ?? $field['required']) @if(isset($field['validation']['minLength'])) minlength="{{ $field['validation']['minLength'] }}" @endif @if(isset($field['validation']['maxLength'])) maxlength="{{ $field['validation']['maxLength'] }}" @endif></textarea>
             @else
-                <input id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" type="{{ $field['type'] }}" @required($field['required'])>
+                <input id="modular-{{ $field['name'] }}" wire:model="data.{{ $field['name'] }}" type="{{ $field['type'] }}" @required($field['validation']['required'] ?? $field['required']) @if(isset($field['validation']['minLength'])) minlength="{{ $field['validation']['minLength'] }}" @endif @if(isset($field['validation']['maxLength'])) maxlength="{{ $field['validation']['maxLength'] }}" @endif>
             @endif
             @if ($field['help'])<small>{{ $field['help'] }}</small>@endif
             @error('data.'.$field['name'])<small role="alert">{{ $message }}</small>@enderror

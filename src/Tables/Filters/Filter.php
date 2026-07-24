@@ -3,9 +3,10 @@
 namespace XaviWorks\ModularSchemaUi\Tables\Filters;
 
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
+use XaviWorks\ModularSchemaUi\Contracts\Payloadable;
 
 /** @phpstan-consistent-constructor */
-abstract class Filter implements FilterContract
+abstract class Filter implements FilterContract, Payloadable
 {
     protected string $label;
 

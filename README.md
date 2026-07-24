@@ -39,17 +39,17 @@ final class UserSchema extends ResourceSchema
 {
     public function form(Form $form): Form
     {
-        return $form->fields([
+        return $form->fields(
             Text::make('name')->required()->maxLength(256),
             Email::make('email')->required(),
-        ]);
+        );
     }
 }
 ```
 
-Validation is declared beside each modular field. Use `required()`,
-`maxLength()`, `minLength()`, `nullable()`, or `rules()` for additional
-Laravel validation rules:
+Array declarations remain supported. Validation is declared beside each
+modular field. Use `required()`, `maxLength()`, `minLength()`, `nullable()`, or
+`rules()` for additional Laravel validation rules:
 
 ```php
 Text::make('name')->required()->maxLength(256),
@@ -58,10 +58,46 @@ Password::make('password')->required()->minLength(8),
 Text::make('nickname')->nullable()->rules(['string', 'max:80']),
 ```
 
-The schema exposes the complete rule map through `validationRules()`. A
-resource created with `php artisan modular:create` uses that map in its
-generated `store` and `update` actions. React/Inertia forms also display the
-validation errors returned by Laravel.
+The schema exposes the complete rule map through `validationRules()` and
+normalized frontend metadata through each field payload. Laravel `FormRequest`
+classes remain the authority for complex business validation and authorization.
+
+## Multiple forms and tables
+
+Use `UiSchema` when one feature has multiple screens:
+
+```php
+use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Forms\Fields\Date;
+use XaviWorks\ModularSchemaUi\Forms\Fields\Select;
+use XaviWorks\ModularSchemaUi\Resources\UiSchema;
+use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
+use XaviWorks\ModularSchemaUi\Tables\Table;
+
+final class ReservationUi extends UiSchema
+{
+    public function createForm(Form $form): Form
+    {
+        return $form->fields(
+            Select::make('room_id')->required(),
+            Date::make('check_in')->required(),
+            Date::make('check_out')->required(),
+        );
+    }
+
+    public function archiveTable(Table $table): Table
+    {
+        return $table->columns(
+            TextColumn::make('reference')->searchable(),
+            TextColumn::make('archived_at'),
+        );
+    }
+}
+```
+
+Resolve named definitions with `resolveForm('create')` and
+`resolveTable('archive')`. This keeps multiple screens grouped by feature
+without requiring a separate class for every small form or table.
 
 ## Table actions and authorization
 
@@ -82,18 +118,7 @@ return $table->actions([
 
 Generated resources include Edit and Delete actions automatically. Add
 `--authorize` when creating a resource to add Laravel policy calls for create,
-update, and delete:
-
-```bash
-php artisan modular:create User --table=users --frontend=react --authorize
-```
-
-Create the corresponding policy in the host application before using that
-option. Authorization remains application-owned because every project has
-different access rules.
-
-The shared field API includes `Date`, `DateTime`, `Number`, and `Checkbox`, in
-addition to text, email, password, select, textarea, and hidden fields.
+update, and delete.
 
 ## Use it with React/Inertia
 
@@ -111,9 +136,6 @@ The installer places the React components in:
 resources/js/components/modular/
 ```
 
-They consume the same payload produced by the Laravel schema. The package
-does not require React components to be used with the Blade adapter.
-
 ## Use it with Blade
 
 ```blade
@@ -128,8 +150,8 @@ and frontend adapter examples, see [docs/USAGE.md](docs/USAGE.md).
 ```text
 src/Forms       Form and field definitions
 src/Tables      Table, column, and filter definitions
-src/Resources   Reusable resource schemas
-src/Query       Search, filter, sort, and pagination pipeline
+src/Resources   Resource and feature-level UI schemas
+src/Query       Focused search, filter, sort, and pagination services
 src/State       Normalized request state
 src/Support     Frontend-neutral schema payloads
 src/View        Blade adapter
@@ -144,9 +166,6 @@ composer install
 composer test
 composer lint
 composer validate --strict --no-check-publish
-
-cd workbench
-PAO_DISABLE=true ./vendor/bin/pest
 ```
 
 The workbench is for package development and is excluded from package

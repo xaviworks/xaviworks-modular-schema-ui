@@ -1,0 +1,21 @@
+<?php
+
+namespace XaviWorks\ModularSchemaUi\Query;
+
+use Illuminate\Database\Query\Builder;
+use XaviWorks\ModularSchemaUi\State\RequestState;
+use XaviWorks\ModularSchemaUi\Tables\Table;
+
+final class SortQuery
+{
+    public function apply(Builder $query, Table $table, RequestState $state): Builder
+    {
+        $sort = $state->sort();
+
+        if ($sort === null || ! in_array($sort, $table->sortableColumnNames(), true)) {
+            return $query;
+        }
+
+        return $query->orderBy($sort, $state->direction());
+    }
+}

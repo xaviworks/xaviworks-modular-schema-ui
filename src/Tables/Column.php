@@ -3,9 +3,11 @@
 namespace XaviWorks\ModularSchemaUi\Tables;
 
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
+use XaviWorks\ModularSchemaUi\Contracts\Payloadable;
+use XaviWorks\ModularSchemaUi\Contracts\ValueResolver;
 
 /** @phpstan-consistent-constructor */
-abstract class Column implements ColumnContract
+abstract class Column implements ColumnContract, Payloadable, ValueResolver
 {
     protected string $label;
 

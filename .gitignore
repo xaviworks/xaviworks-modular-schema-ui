@@ -21,6 +21,10 @@
 /storage/*.key
 /storage/pail
 /vendor
+/workbench/vendor/
+/workbench/node_modules/
+/workbench/public/build/
+/workbench/.phpunit.result.cache
 _ide_helper.php
 Homestead.json
 Homestead.yaml

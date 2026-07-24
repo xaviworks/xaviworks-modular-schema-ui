@@ -1,0 +1,79 @@
+export type FieldValidation = {
+    required?: boolean;
+    nullable?: boolean;
+    email?: boolean;
+    minLength?: number;
+    maxLength?: number;
+};
+
+export type FormField = {
+    name: string;
+    label: string;
+    type: string;
+    required: boolean;
+    placeholder?: string | null;
+    help?: string | null;
+    options?: Record<string, string | number>;
+    attributes?: Record<string, string | number | boolean>;
+    validation?: FieldValidation;
+};
+
+export type FormPayload = {
+    fields: FormField[];
+    values: Record<string, unknown>;
+};
+
+export type TableColumn = {
+    name: string;
+    label: string;
+    sortable?: boolean;
+    searchable?: boolean;
+};
+
+export type TableFilter = {
+    name: string;
+    label: string;
+    type?: string;
+    options?: Record<string, string | number>;
+};
+
+export type TableAction = {
+    name: string;
+    label: string;
+    method: string;
+    url?: string | null;
+    confirm?: string | null;
+};
+
+export type TablePagination = {
+    currentPage: number;
+    lastPage: number;
+    perPage: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    prevUrl?: string | null;
+    nextUrl?: string | null;
+};
+
+export type TablePayload = {
+    columns: TableColumn[];
+    filters: TableFilter[];
+    actions: TableAction[];
+    records: Array<Record<string, unknown>>;
+    emptyMessage: string;
+    perPageOptions: number[];
+    controls: {
+        searchable: boolean;
+        search?: string | null;
+        sort?: string | null;
+        direction: string;
+        filters: Record<string, string | number | null>;
+    };
+    pagination?: TablePagination | null;
+};
+
+export type TableQuery = Record<
+    string,
+    string | number | null | undefined | Record<string, string | number | null | undefined>
+>;

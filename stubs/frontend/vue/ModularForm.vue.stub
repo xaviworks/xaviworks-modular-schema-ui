@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
+import type { FormPayload } from './ModularSchema.types';
 
-type Field = { name: string; label: string; type: string; required: boolean; placeholder?: string | null; help?: string | null; options?: Record<string, string> };
-
-defineProps<{ form: { fields: Field[]; values: Record<string, unknown> } }>();
+defineProps<{ form: FormPayload }>();
 const emit = defineEmits<{ submit: [event: SubmitEvent] }>();
 const page = usePage<{ errors?: Record<string, string> }>();
 </script>
@@ -12,11 +11,11 @@ const page = usePage<{ errors?: Record<string, string> }>();
     <form class="space-y-5" @submit="emit('submit', $event)">
         <label v-for="field in form.fields" :key="field.name" class="modular-form-label block text-sm font-medium">
             <span>{{ field.label }}<span v-if="field.required" aria-hidden="true"> *</span></span>
-            <select v-if="field.type === 'select'" :name="field.name" :required="field.required" class="modular-form-control mt-1 block w-full rounded-md border px-3 py-2" :value="String(form.values[field.name] ?? '')">
+            <select v-if="field.type === 'select'" :name="field.name" :required="field.validation?.required ?? field.required" class="modular-form-control mt-1 block w-full rounded-md border px-3 py-2" :value="String(form.values[field.name] ?? '')">
                 <option v-for="(label, value) in field.options" :key="value" :value="value">{{ label }}</option>
             </select>
-            <textarea v-else-if="field.type === 'textarea'" :name="field.name" :required="field.required" :placeholder="field.placeholder ?? undefined" class="modular-form-control mt-1 block min-h-24 w-full rounded-md border px-3 py-2">{{ form.values[field.name] ?? '' }}</textarea>
-            <input v-else :name="field.name" :type="field.type" :value="field.type === 'password' ? undefined : form.values[field.name]" :required="field.required" :placeholder="field.placeholder ?? undefined" class="modular-form-control mt-1 block w-full rounded-md border px-3 py-2">
+            <textarea v-else-if="field.type === 'textarea'" :name="field.name" :required="field.validation?.required ?? field.required" :minlength="field.validation?.minLength" :maxlength="field.validation?.maxLength" :placeholder="field.placeholder ?? undefined" class="modular-form-control mt-1 block min-h-24 w-full rounded-md border px-3 py-2">{{ form.values[field.name] ?? '' }}</textarea>
+            <input v-else :name="field.name" :type="field.type" :value="field.type === 'password' ? undefined : form.values[field.name]" :required="field.validation?.required ?? field.required" :minlength="field.validation?.minLength" :maxlength="field.validation?.maxLength" :placeholder="field.placeholder ?? undefined" class="modular-form-control mt-1 block w-full rounded-md border px-3 py-2">
             <small v-if="field.help" class="modular-form-help mt-1 block text-xs">{{ field.help }}</small>
             <small v-if="page.props.errors?.[field.name]" class="modular-form-error mt-1 block text-xs" role="alert">{{ page.props.errors[field.name] }}</small>
         </label>

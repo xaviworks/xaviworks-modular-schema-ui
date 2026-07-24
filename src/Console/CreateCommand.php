@@ -16,6 +16,7 @@ final class CreateCommand extends Command
         {--table= : The database table, defaults to the plural snake-case resource name}
         {--frontend= : Frontend adapter: blade, react, vue, or livewire}
         {--authorize : Add Laravel policy authorization calls to the generated controller}
+        {--dry-run : Preview generated files without writing them}
         {--force : Replace existing generated files}';
 
     protected $description = 'Create a modular resource from an existing Eloquent model and database table';
@@ -89,6 +90,12 @@ final class CreateCommand extends Command
         }
 
         foreach ($filesToWrite as $path => $contents) {
+            if ($this->option('dry-run')) {
+                $this->line("Would create: {$path}");
+
+                continue;
+            }
+
             if ($files->exists($path) && ! $this->option('force')) {
                 $this->warn("Skipped existing file: {$path} (use --force to replace)");
 
@@ -316,7 +323,24 @@ final class CreateCommand extends Command
 
     private function reactIndexCode(string $resource): string
     {
-        return "import { Head, Link } from '@inertiajs/react';\nimport { ModularTable } from '@/components/modular/ModularTable';\n\nexport default function Index({ table }: { table: Parameters<typeof ModularTable>[0]['table'] }) {\n    return <><Head title=\"{$resource}\" /><div><Link href=\"/".Str::kebab(Str::pluralStudly($resource))."/create\">Create {$resource}</Link><ModularTable table={table} /></div></>;\n}\n";
+        $slug = Str::kebab(Str::pluralStudly($resource));
+
+        return <<<TSX
+import { Head, Link } from '@inertiajs/react';
+import { ModularTable } from '@/components/modular/ModularTable';
+
+export default function Index({ table }: { table: Parameters<typeof ModularTable>[0]['table'] }) {
+    return (
+        <>
+            <Head title="{$resource}" />
+            <div>
+                <Link href="/{$slug}/create">Create {$resource}</Link>
+                <ModularTable table={table} />
+            </div>
+        </>
+    );
+}
+TSX;
     }
 
     private function reactFormPageCode(string $resource, string $mode): string
@@ -328,7 +352,29 @@ final class CreateCommand extends Command
         $method = $mode === 'edit' ? 'put' : 'post';
         $typeProps = $mode === 'edit' ? "; {$resourceVariable}: { id: number }" : '';
 
-        return "import { Head, router } from '@inertiajs/react';\nimport { ModularForm } from '@/components/modular/ModularForm';\n\nexport default function ".Str::studly($mode)."({ form{$props} }: { form: Parameters<typeof ModularForm>[0]['form']{$typeProps} }) {\n    return <><Head title=\"{$mode} {$resource}\" /><ModularForm form={form} onSubmit={(event) => { event.preventDefault(); router.{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget))); }} /></>;\n}\n";
+        $component = Str::studly($mode);
+
+        return <<<TSX
+import type { FormEvent } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { ModularForm } from '@/components/modular/ModularForm';
+
+export default function {$component}({ form{$props} }: {
+    form: Parameters<typeof ModularForm>[0]['form']{$typeProps}
+}) {
+    const submit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        router.{$method}({$url}, Object.fromEntries(new FormData(event.currentTarget)));
+    };
+
+    return (
+        <>
+            <Head title="{$mode} {$resource}" />
+            <ModularForm form={form} onSubmit={submit} />
+        </>
+    );
+}
+TSX;
     }
 
     private function resourceVariable(string $resource): string

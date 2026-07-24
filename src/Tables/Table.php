@@ -7,6 +7,8 @@ use Illuminate\Support\Collection;
 use XaviWorks\ModularSchemaUi\Contracts\Action as ActionContract;
 use XaviWorks\ModularSchemaUi\Contracts\Column as ColumnContract;
 use XaviWorks\ModularSchemaUi\Contracts\Filter as FilterContract;
+use XaviWorks\ModularSchemaUi\Contracts\Payloadable;
+use XaviWorks\ModularSchemaUi\Contracts\ValueResolver;
 use XaviWorks\ModularSchemaUi\State\RequestState;
 
 final class Table
@@ -40,15 +42,14 @@ final class Table
         $this->actions = collect();
     }
 
-    public static function make(): self
+    public static function make(array|ColumnContract ...$columns): self
     {
-        return new self;
+        return (new self)->columns(...$columns);
     }
 
-    /** @param array<int, ColumnContract> $columns */
-    public function columns(array $columns): self
+    public function columns(array|ColumnContract ...$columns): self
     {
-        $this->columns = collect($columns);
+        $this->columns = collect($this->normalizeItems($columns));
 
         return $this;
     }
@@ -87,18 +88,16 @@ final class Table
         return $this;
     }
 
-    /** @param array<int, FilterContract> $filters */
-    public function filters(array $filters): self
+    public function filters(array|FilterContract ...$filters): self
     {
-        $this->filters = collect($filters);
+        $this->filters = collect($this->normalizeItems($filters));
 
         return $this;
     }
 
-    /** @param array<int, ActionContract> $actions */
-    public function actions(array $actions): self
+    public function actions(array|ActionContract ...$actions): self
     {
-        $this->actions = collect($actions);
+        $this->actions = collect($this->normalizeItems($actions));
 
         return $this;
     }
@@ -191,7 +190,7 @@ final class Table
             $values = [];
 
             foreach ($this->columns as $column) {
-                $values[$column->name()] = method_exists($column, 'valueFor')
+                $values[$column->name()] = $column instanceof ValueResolver
                     ? $column->valueFor($record)
                     : data_get($record, $column->name());
             }
@@ -207,7 +206,7 @@ final class Table
 
         return [
             'columns' => $this->columns
-                ->map(fn (ColumnContract $column): array => method_exists($column, 'toArray')
+                ->map(fn (ColumnContract $column): array => $column instanceof Payloadable
                     ? $column->toArray()
                     : [
                         'name' => $column->name(),
@@ -219,7 +218,7 @@ final class Table
                 ->values()
                 ->all(),
             'filters' => $this->filters
-                ->map(fn (FilterContract $filter): array => method_exists($filter, 'toArray')
+                ->map(fn (FilterContract $filter): array => $filter instanceof Payloadable
                     ? $filter->toArray()
                     : [
                         'name' => $filter->name(),
@@ -256,5 +255,14 @@ final class Table
                 'nextUrl' => $paginator->nextPageUrl(),
             ] : null,
         ];
+    }
+
+    /** @param array<int, array<int, ColumnContract>|array<int, FilterContract>|array<int, ActionContract>|ColumnContract|FilterContract|ActionContract> $items */
+    private function normalizeItems(array $items): array
+    {
+        return collect($items)
+            ->flatMap(fn (array|ColumnContract|FilterContract|ActionContract $item): array => is_array($item) ? $item : [$item])
+            ->values()
+            ->all();
     }
 }

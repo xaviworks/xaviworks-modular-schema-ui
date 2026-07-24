@@ -3,9 +3,11 @@
 namespace XaviWorks\ModularSchemaUi\Forms;
 
 use XaviWorks\ModularSchemaUi\Contracts\Field as FieldContract;
+use XaviWorks\ModularSchemaUi\Contracts\Payloadable;
+use XaviWorks\ModularSchemaUi\Contracts\Validatable;
 
 /** @phpstan-consistent-constructor */
-abstract class Field implements FieldContract
+abstract class Field implements FieldContract, Payloadable, Validatable
 {
     protected string $label;
 
@@ -22,6 +24,10 @@ abstract class Field implements FieldContract
     protected bool $disabled = false;
 
     protected bool $nullable = false;
+
+    protected ?int $minimumLength = null;
+
+    protected ?int $maximumLength = null;
 
     /** @var list<string> */
     protected array $rules = [];
@@ -97,11 +103,15 @@ abstract class Field implements FieldContract
 
     public function maxLength(int $length): static
     {
+        $this->maximumLength = $length;
+
         return $this->rules(["max:{$length}"]);
     }
 
     public function minLength(int $length): static
     {
+        $this->minimumLength = $length;
+
         return $this->rules(["min:{$length}"]);
     }
 
@@ -199,6 +209,29 @@ abstract class Field implements FieldContract
         return array_values(array_unique($rules));
     }
 
+    /** @return array<string, bool|int> */
+    public function validation(): array
+    {
+        $validation = [
+            'required' => $this->required,
+            'nullable' => $this->nullable,
+        ];
+
+        if ($this->minimumLength !== null) {
+            $validation['minLength'] = $this->minimumLength;
+        }
+
+        if ($this->maximumLength !== null) {
+            $validation['maxLength'] = $this->maximumLength;
+        }
+
+        if ($this->type() === 'email') {
+            $validation['email'] = true;
+        }
+
+        return $validation;
+    }
+
     /** @return array<string, mixed> */
     public function toArray(): array
     {
@@ -215,6 +248,7 @@ abstract class Field implements FieldContract
             'attributes' => $this->htmlAttributes(),
             'options' => $this->optionValues(),
             'rules' => $this->validationRules(),
+            'validation' => $this->validation(),
         ];
     }
 }

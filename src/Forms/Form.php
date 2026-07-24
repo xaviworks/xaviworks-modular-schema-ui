@@ -4,6 +4,8 @@ namespace XaviWorks\ModularSchemaUi\Forms;
 
 use Illuminate\Support\Collection;
 use XaviWorks\ModularSchemaUi\Contracts\Field as FieldContract;
+use XaviWorks\ModularSchemaUi\Contracts\Payloadable;
+use XaviWorks\ModularSchemaUi\Contracts\Validatable;
 
 final class Form
 {
@@ -17,15 +19,14 @@ final class Form
         $this->fields = collect();
     }
 
-    public static function make(): self
+    public static function make(array|FieldContract ...$fields): self
     {
-        return new self;
+        return (new self)->fields(...$fields);
     }
 
-    /** @param array<int, FieldContract> $fields */
-    public function fields(array $fields): self
+    public function fields(array|FieldContract ...$fields): self
     {
-        $this->fields = collect($fields);
+        $this->fields = collect($this->normalizeItems($fields));
 
         return $this;
     }
@@ -70,8 +71,8 @@ final class Form
     public function validationRules(): array
     {
         return $this->fields
-            ->filter(fn (FieldContract $field): bool => method_exists($field, 'validationRules'))
-            ->mapWithKeys(fn (FieldContract $field): array => [$field->name() => $field->validationRules()])
+            ->filter(fn (FieldContract $field): bool => $field instanceof Validatable)
+            ->mapWithKeys(fn (Validatable&FieldContract $field): array => [$field->name() => $field->validationRules()])
             ->filter(fn (array $rules): bool => $rules !== [])
             ->all();
     }
@@ -87,7 +88,7 @@ final class Form
 
         return [
             'fields' => $this->fields
-                ->map(fn (FieldContract $field): array => method_exists($field, 'toArray')
+                ->map(fn (FieldContract $field): array => $field instanceof Payloadable
                     ? $field->toArray()
                     : [
                         'name' => $field->name(),
@@ -104,5 +105,14 @@ final class Form
                 ->all(),
             'values' => $values,
         ];
+    }
+
+    /** @param array<int, array<int, FieldContract>|FieldContract> $items */
+    private function normalizeItems(array $items): array
+    {
+        return collect($items)
+            ->flatMap(fn (array|FieldContract $item): array => is_array($item) ? $item : [$item])
+            ->values()
+            ->all();
     }
 }

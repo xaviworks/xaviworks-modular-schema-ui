@@ -1,36 +1,18 @@
 import { router } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import type {
+    TableAction,
+    TableColumn,
+    TableFilter,
+    TablePayload,
+    TableQuery,
+} from './ModularSchema.types';
 
-type Column = { name: string; label: string; sortable?: boolean };
-type Filter = { name: string; label: string; options?: Record<string, string> };
-type Action = { name: string; label: string; method: string; url?: string | null; confirm?: string | null };
-type Table = {
-    columns: Column[];
-    filters: Filter[];
-    actions: Action[];
-    records: Array<Record<string, unknown>>;
-    emptyMessage: string;
-    perPageOptions: number[];
-    controls: {
-        searchable: boolean;
-        search?: string | null;
-        sort?: string | null;
-        direction: string;
-        filters: Record<string, string | number | null>;
-    };
-    pagination?: {
-        currentPage: number;
-        lastPage: number;
-        perPage: number;
-        total: number;
-        from: number | null;
-        to: number | null;
-        prevUrl?: string | null;
-        nextUrl?: string | null;
-    } | null;
-};
-
-type TableQuery = Record<string, string | number | null | undefined | Record<string, string | number | null | undefined>>;
+type Table = TablePayload;
+type Column = TableColumn;
+type Filter = TableFilter;
+type Action = TableAction;
+type TableProps = { table: Table };
 
 function updateTable(data: TableQuery) {
     router.get(window.location.pathname, data, {
@@ -44,7 +26,15 @@ function actionUrl(template: string, record: Record<string, unknown>): string {
     return template.replace(/\{([^}]+)\}/g, (_, key: string) => String(record[key] ?? ''));
 }
 
-export function ModularTable({ table }: { table: Table }) {
+function currentQuery(table: Table): TableQuery {
+    return {
+        search: table.controls.search ?? undefined,
+        filters: table.controls.filters,
+        per_page: table.pagination?.perPage,
+    };
+}
+
+function FilterBar({ table }: TableProps) {
     const apply = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -54,7 +44,9 @@ export function ModularTable({ table }: { table: Table }) {
         table.filters.forEach((filter) => {
             const value = form.get(`filters[${filter.name}]`);
 
-            if (value) filters[filter.name] = String(value);
+            if (value) {
+                filters[filter.name] = String(value);
+            }
         });
 
         const search = form.get('search');
@@ -67,84 +59,223 @@ export function ModularTable({ table }: { table: Table }) {
         });
     };
 
+    return (
+        <form onSubmit={apply} className="flex flex-wrap items-center gap-3">
+            {table.controls.searchable && (
+                <label className="relative min-w-0 flex-1 text-sm font-medium">
+                    <span className="sr-only">Search</span>
+                    <span className="modular-search-icon pointer-events-none absolute inset-y-0 left-3 flex items-center">⌕</span>
+                    <input
+                        name="search"
+                        type="search"
+                        placeholder="Search..."
+                        defaultValue={table.controls.search ?? ''}
+                        className="modular-table-search block h-11 w-full rounded-lg border px-10 text-sm font-normal shadow-sm outline-none transition"
+                    />
+                </label>
+            )}
+
+            {table.filters.map((filter) => (
+                <FilterControl key={filter.name} filter={filter} table={table} />
+            ))}
+
+            <button type="submit" className="modular-filter-button h-11 rounded-lg px-5 text-sm font-semibold shadow-sm transition">
+                Filter
+            </button>
+        </form>
+    );
+}
+
+function FilterControl({ filter, table }: { filter: Filter; table: Table }) {
+    const value = String(table.controls.filters[filter.name] ?? '');
+    const options = Object.entries(filter.options ?? {});
+
+    return (
+        <label className="min-w-40 text-sm font-medium">
+            <span className="sr-only">{filter.label}</span>
+            {options.length > 0 ? (
+                <select
+                    name={`filters[${filter.name}]`}
+                    defaultValue={value}
+                    className="modular-table-filter h-11 w-full rounded-lg border px-3 text-sm font-normal shadow-sm"
+                >
+                    <option value="">Any {filter.label}</option>
+                    {options.map(([optionValue, label]) => (
+                        <option key={optionValue} value={optionValue}>{label}</option>
+                    ))}
+                </select>
+            ) : (
+                <input
+                    name={`filters[${filter.name}]`}
+                    type="search"
+                    placeholder={`Filter ${filter.label}`}
+                    defaultValue={value}
+                    className="modular-table-filter h-11 w-full rounded-lg border px-3 text-sm font-normal shadow-sm"
+                />
+            )}
+        </label>
+    );
+}
+
+function TableHeader({ table }: TableProps) {
     const sort = (column: Column) => {
-        if (!column.sortable) return;
+        if (!column.sortable) {
+            return;
+        }
+
+        const direction = table.controls.sort === column.name && table.controls.direction === 'asc'
+            ? 'desc'
+            : 'asc';
 
         updateTable({
+            ...currentQuery(table),
             sort: column.name,
-            direction: table.controls.sort === column.name && table.controls.direction === 'asc' ? 'desc' : 'asc',
-            search: table.controls.search ?? undefined,
-            filters: table.controls.filters,
-            per_page: table.pagination?.perPage,
+            direction,
         });
     };
 
     return (
-        <div className="space-y-5">
-            <form onSubmit={apply} className="flex flex-wrap items-center gap-3">
-                {table.controls.searchable && (
-                    <label className="relative min-w-0 flex-1 text-sm font-medium">
-                        <span className="sr-only">Search</span>
-                        <span className="modular-search-icon pointer-events-none absolute inset-y-0 left-3 flex items-center">⌕</span>
-                        <input
-                            name="search"
-                            type="search"
-                            placeholder="Search..."
-                            defaultValue={table.controls.search ?? ''}
-                            className="modular-table-search block h-11 w-full rounded-lg border px-10 text-sm font-normal shadow-sm outline-none transition"
-                        />
-                    </label>
-                )}
-
-                {table.filters.map((filter) => (
-                    <label key={filter.name} className="min-w-40 text-sm font-medium">
-                        <span className="sr-only">{filter.label}</span>
-                        {Object.keys(filter.options ?? {}).length > 0 ? (
-                            <select
-                                name={`filters[${filter.name}]`}
-                                defaultValue={String(table.controls.filters[filter.name] ?? '')}
-                                className="modular-table-filter h-11 w-full rounded-lg border px-3 text-sm font-normal shadow-sm"
-                            >
-                                <option value="">Any {filter.label}</option>
-                                {Object.entries(filter.options ?? {}).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                            </select>
-                        ) : (
-                            <input
-                                name={`filters[${filter.name}]`}
-                                type="search"
-                                placeholder={`Filter ${filter.label}`}
-                                defaultValue={String(table.controls.filters[filter.name] ?? '')}
-                                className="modular-table-filter h-11 w-full rounded-lg border px-3 text-sm font-normal shadow-sm"
-                            />
-                        )}
-                    </label>
+        <thead className="modular-table-header">
+            <tr>
+                {table.columns.map((column) => (
+                    <th key={column.name} className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">
+                        {column.sortable ? (
+                            <button type="button" onClick={() => sort(column)} className="modular-sort-button">
+                                {column.label}
+                                {table.controls.sort === column.name && (table.controls.direction === 'asc' ? ' ↑' : ' ↓')}
+                            </button>
+                        ) : column.label}
+                    </th>
                 ))}
+                {table.actions.length > 0 && (
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">Actions</th>
+                )}
+            </tr>
+        </thead>
+    );
+}
 
-                <button type="submit" className="modular-filter-button h-11 rounded-lg px-5 text-sm font-semibold shadow-sm transition">
-                    Filter
-                </button>
-            </form>
+function TableBody({ table }: TableProps) {
+    const columnCount = table.columns.length + (table.actions.length > 0 ? 1 : 0);
+
+    if (table.records.length === 0) {
+        return (
+            <tbody className="divide-y">
+                <tr>
+                    <td className="px-6 py-10 text-center" colSpan={columnCount}>{table.emptyMessage}</td>
+                </tr>
+            </tbody>
+        );
+    }
+
+    return (
+        <tbody className="divide-y">
+            {table.records.map((record, index) => (
+                <tr key={String(record.id ?? index)} className="transition">
+                    {table.columns.map((column) => (
+                        <td className="whitespace-nowrap px-6 py-5" key={column.name}>
+                            {String(record[column.name] ?? '')}
+                        </td>
+                    ))}
+                    {table.actions.length > 0 && <ActionCells table={table} record={record} />}
+                </tr>
+            ))}
+        </tbody>
+    );
+}
+
+function ActionCells({ table, record }: { table: Table; record: Record<string, unknown> }) {
+    const visitAction = (action: Action) => {
+        if (!action.url || (action.confirm && !window.confirm(action.confirm))) {
+            return;
+        }
+
+        const url = actionUrl(action.url, record);
+
+        router.visit(url, action.method === 'GET'
+            ? {}
+            : { method: action.method.toLowerCase() as 'post' | 'put' | 'patch' | 'delete' });
+    };
+
+    return (
+        <td className="whitespace-nowrap px-6 py-5">
+            <div className="flex gap-2">
+                {table.actions.map((action) => action.url && (
+                    <button key={action.name} type="button" className="modular-action-button" onClick={() => visitAction(action)}>
+                        {action.label}
+                    </button>
+                ))}
+            </div>
+        </td>
+    );
+}
+
+function TablePagination({ table }: TableProps) {
+    const pagination = table.pagination;
+
+    if (!pagination) {
+        return null;
+    }
+
+    const goToPage = (page: number) => {
+        updateTable({
+            ...currentQuery(table),
+            page,
+        });
+    };
+
+    return (
+        <div className="modular-table-pagination flex flex-wrap items-center justify-between gap-4 px-6 py-4 text-sm">
+            <span>Showing {pagination.from ?? 0}-{pagination.to ?? 0} of {pagination.total}</span>
+            <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2">
+                    Rows
+                    <select
+                        aria-label="Rows per page"
+                        defaultValue={String(pagination.perPage)}
+                        onChange={(event) => updateTable({ ...currentQuery(table), page: 1, per_page: event.target.value })}
+                        className="modular-table-per-page h-10 rounded-lg border px-3"
+                    >
+                        {table.perPageOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                    </select>
+                </label>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        disabled={!pagination.prevUrl}
+                        onClick={() => goToPage(pagination.currentPage - 1)}
+                        className="modular-pagination-button h-10 rounded-lg border px-4 disabled:opacity-40"
+                    >
+                        Previous
+                    </button>
+                    <button
+                        type="button"
+                        disabled={!pagination.nextUrl}
+                        onClick={() => goToPage(pagination.currentPage + 1)}
+                        className="modular-pagination-button h-10 rounded-lg border px-4 disabled:opacity-40"
+                    >
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export function ModularTable({ table }: TableProps) {
+    return (
+        <div className="space-y-5">
+            <FilterBar table={table} />
 
             <div className="modular-table-card overflow-hidden rounded-xl border shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-left text-sm">
-                        <thead className="modular-table-header">
-                            <tr>
-                                {table.columns.map((column) => (
-                                    <th key={column.name} className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">
-                                        {column.sortable ? <button type="button" onClick={() => sort(column)} className="modular-sort-button">{column.label}{table.controls.sort === column.name ? (table.controls.direction === 'asc' ? ' ↑' : ' ↓') : ''}</button> : column.label}
-                                    </th>
-                                ))}
-                                {table.actions.length > 0 && <th className="px-6 py-4 text-xs font-semibold uppercase tracking-widest">Actions</th>}
-                            </tr>
-                        </thead>
-                            <tbody className="divide-y">
-                            {table.records.length === 0 ? <tr><td className="px-6 py-10 text-center" colSpan={table.columns.length + (table.actions.length > 0 ? 1 : 0)}>{table.emptyMessage}</td></tr> : table.records.map((record, index) => <tr key={index} className="transition">{table.columns.map((column) => <td className="whitespace-nowrap px-6 py-5" key={column.name}>{String(record[column.name] ?? '')}</td>)}{table.actions.length > 0 && <td className="whitespace-nowrap px-6 py-5"><div className="flex gap-2">{table.actions.map((action) => action.url && <button key={action.name} type="button" className="modular-action-button" onClick={() => { if (action.confirm && !window.confirm(action.confirm)) return; const url = actionUrl(action.url!, record); router.visit(url, action.method === 'GET' ? {} : { method: action.method.toLowerCase() as 'post' | 'put' | 'patch' | 'delete' }); }}>{action.label}</button>)}</div></td>}</tr>)}
-                        </tbody>
+                        <TableHeader table={table} />
+                        <TableBody table={table} />
                     </table>
                 </div>
 
-                {table.pagination && <div className="modular-table-pagination flex flex-wrap items-center justify-between gap-4 px-6 py-4 text-sm"><span>Showing {table.pagination.from ?? 0}-{table.pagination.to ?? 0} of {table.pagination.total}</span><div className="flex items-center gap-3"><label className="flex items-center gap-2">Rows<select aria-label="Rows per page" defaultValue={String(table.pagination.perPage)} onChange={(event) => updateTable({ page: 1, per_page: event.target.value, search: table.controls.search ?? undefined, filters: table.controls.filters })} className="modular-table-per-page h-10 rounded-lg border px-3">{table.perPageOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label><div className="flex gap-2"><button type="button" disabled={!table.pagination.prevUrl} onClick={() => updateTable({ page: table.pagination!.currentPage - 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="modular-pagination-button h-10 rounded-lg border px-4 disabled:opacity-40">Previous</button><button type="button" disabled={!table.pagination.nextUrl} onClick={() => updateTable({ page: table.pagination!.currentPage + 1, search: table.controls.search ?? undefined, filters: table.controls.filters, per_page: table.pagination!.perPage })} className="modular-pagination-button h-10 rounded-lg border px-4 disabled:opacity-40">Next</button></div></div></div>}
+                <TablePagination table={table} />
             </div>
         </div>
     );

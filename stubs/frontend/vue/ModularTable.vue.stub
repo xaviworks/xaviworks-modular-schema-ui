@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { reactive } from 'vue';
+import type { TablePayload } from './ModularSchema.types';
 
-type Table = { columns: Array<{ name: string; label: string; sortable?: boolean }>; filters: Array<{ name: string; label: string; options?: Record<string, string> }>; records: Array<Record<string, unknown>>; emptyMessage: string; perPageOptions: number[]; actions: Array<{ name: string; label: string; method: string; url?: string | null; confirm?: string | null }>; controls: { searchable: boolean; search?: string | null; sort?: string | null; direction: string; filters: Record<string, string | number | null> }; pagination?: { currentPage: number; lastPage: number; perPage: number; total: number; from: number | null; to: number | null; prevUrl?: string | null; nextUrl?: string | null } | null };
-const props = defineProps<{ table: Table }>();
+const props = defineProps<{ table: TablePayload }>();
 const query = reactive<{ search: string; filters: Record<string, unknown>; per_page: unknown }>({ search: props.table.controls.search ?? '', filters: { ...props.table.controls.filters }, per_page: props.table.pagination?.perPage });
 const apply = () => router.get(window.location.pathname, { ...query, page: 1 }, { preserveState: true, preserveScroll: true, replace: true });
 const urlFor = (template: string, record: Record<string, unknown>) => template.replace(/\{([^}]+)\}/g, (_, key: string) => String(record[key] ?? ''));

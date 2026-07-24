@@ -2,16 +2,28 @@
 
 namespace XaviWorks\ModularSchemaUi\Tests\Feature;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Date;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Email;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Number;
 use XaviWorks\ModularSchemaUi\Forms\Fields\Text;
 use XaviWorks\ModularSchemaUi\Forms\Form;
+use XaviWorks\ModularSchemaUi\Query\QueryPipeline;
+use XaviWorks\ModularSchemaUi\Resources\UiSchema;
+use XaviWorks\ModularSchemaUi\State\RequestState;
 use XaviWorks\ModularSchemaUi\Support\SchemaPayload;
 use XaviWorks\ModularSchemaUi\Tables\Action;
 use XaviWorks\ModularSchemaUi\Tables\Columns\TextColumn;
+use XaviWorks\ModularSchemaUi\Tables\Filters\TextFilter;
 use XaviWorks\ModularSchemaUi\Tables\Table;
 use XaviWorks\ModularSchemaUi\Tests\TestCase;
+
+final class GeneratorUser extends Model
+{
+    protected $table = 'generator_users';
+}
 
 final class PackageSmokeTest extends TestCase
 {
@@ -44,6 +56,16 @@ final class PackageSmokeTest extends TestCase
         $this->assertSame(['required', 'max:256'], $form->validationRules()['name']);
         $this->assertSame(['email'], $form->validationRules()['email']);
         $this->assertSame(['required', 'max:256'], $form->toArray()['fields'][0]['rules']);
+        $this->assertSame([
+            'required' => true,
+            'nullable' => false,
+            'maxLength' => 256,
+        ], $form->toArray()['fields'][0]['validation']);
+        $this->assertSame([
+            'required' => false,
+            'nullable' => false,
+            'email' => true,
+        ], $form->toArray()['fields'][1]['validation']);
     }
 
     public function test_table_schema_contains_frontend_neutral_records(): void
@@ -87,6 +109,52 @@ final class PackageSmokeTest extends TestCase
         $this->assertSame('number', $form->toArray()['fields'][1]['type']);
     }
 
+    public function test_forms_and_tables_support_shortcut_declarations(): void
+    {
+        $form = Form::make(
+            Text::make('name')->required(),
+            Email::make('email'),
+        );
+
+        $table = Table::make(
+            TextColumn::make('name')->searchable(),
+        );
+
+        $this->assertCount(2, $form->getFields());
+        $this->assertCount(1, $table->getColumns());
+    }
+
+    public function test_a_feature_can_define_multiple_named_forms_and_tables(): void
+    {
+        $ui = new class extends UiSchema
+        {
+            public function form(Form $form): Form
+            {
+                return $form->fields(Text::make('name'));
+            }
+
+            public function createForm(Form $form): Form
+            {
+                return $form->fields(Text::make('name')->required());
+            }
+
+            public function table(Table $table): Table
+            {
+                return $table->columns(TextColumn::make('name'));
+            }
+
+            public function archiveTable(Table $table): Table
+            {
+                return $table->columns(TextColumn::make('archived_at'));
+            }
+        };
+
+        $this->assertFalse($ui->resolveForm()->toArray()['fields'][0]['required']);
+        $this->assertTrue($ui->resolveForm('create')->toArray()['fields'][0]['required']);
+        $this->assertSame('name', $ui->resolveTable()->toArray()['columns'][0]['name']);
+        $this->assertSame('archived_at', $ui->resolveTable('archive')->toArray()['columns'][0]['name']);
+    }
+
     public function test_install_command_can_select_a_react_adapter_without_writing_files(): void
     {
         $this->artisan('modular:install', [
@@ -96,5 +164,66 @@ final class PackageSmokeTest extends TestCase
             ->expectsOutput('Created by Junn Xavier Adalid')
             ->expectsOutput('Selected Modular frontend: react')
             ->assertSuccessful();
+    }
+
+    public function test_create_command_can_preview_a_generated_resource(): void
+    {
+        Schema::create('generator_users', function ($table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('email');
+        });
+
+        $this->artisan('modular:create', [
+            'name' => 'GeneratorUser',
+            '--model' => GeneratorUser::class,
+            '--table' => 'generator_users',
+            '--frontend' => 'react',
+            '--dry-run' => true,
+        ])->expectsOutput('Would create: '.app_path('Modular/GeneratorUsers/GeneratorUserSchema.php'))
+            ->expectsOutput('Would create: '.app_path('Http/Controllers/GeneratorUserController.php'))
+            ->assertSuccessful();
+
+        $this->assertFalse(Schema::hasTable('nonexistent_generated_table'));
+    }
+
+    public function test_query_pipeline_applies_search_filters_sorting_and_pagination(): void
+    {
+        Schema::create('query_users', function ($table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('status');
+        });
+
+        DB::table('query_users')->insert([
+            ['name' => 'Alice', 'status' => 'active'],
+            ['name' => 'Bob', 'status' => 'inactive'],
+            ['name' => 'Alicia', 'status' => 'active'],
+        ]);
+
+        $table = Table::make(
+            TextColumn::make('name')->sortable()->searchable(),
+        )->filters(
+            TextFilter::make('status'),
+        )->perPageOptions([1, 10]);
+
+        $state = RequestState::from([
+            'search' => 'Ali',
+            'sort' => 'name',
+            'direction' => 'desc',
+            'filters' => ['status' => 'active'],
+            'per_page' => 1,
+        ], $table->sortableColumnNames(), $table->filterNames());
+
+        $paginator = QueryPipeline::make()->resolve(
+            DB::table('query_users'),
+            $table,
+            $state,
+            $table->getPerPageOptions(),
+        );
+
+        $this->assertSame(2, $paginator->total());
+        $this->assertSame('Alicia', $paginator->items()[0]->name);
+        $this->assertSame(1, $paginator->perPage());
     }
 }

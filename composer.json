@@ -45,7 +45,9 @@
         "exclude": [
             "/workbench/",
             "/tests/",
+            "/vendor/",
             "/phpunit.xml",
+            "/.phpunit.result.cache",
             "/composer.lock",
             "/.github/"
         ]
