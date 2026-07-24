@@ -68,6 +68,12 @@ jobs:
         working-directory: workbench
         run: composer install --no-interaction --prefer-dist
 
+      - name: Prepare workbench environment
+        working-directory: workbench
+        run: |
+          cp .env.example .env
+          php artisan key:generate --force --ansi
+
       - name: Run workbench tests
         working-directory: workbench
         run: composer test
