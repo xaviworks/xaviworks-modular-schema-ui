@@ -2,16 +2,13 @@
 
 All notable changes to this package are documented in this file.
 
-## [0.1.0] - 2026-07-24
+## [0.2.2] - 2026-07-24
 
 ### Added
 
-- Modular form and table schemas with concise declaration APIs.
-- Named forms and tables for scalable feature-level UI definitions.
-- Shared validation metadata for backend rules and frontend payloads.
-- Allowlisted search, filtering, sorting, and pagination query pipeline.
-- Blade, React, Vue, and Livewire adapter stubs.
-- Resource generation and dry-run installation commands.
-- Laravel workbench, automated CI, static analysis, formatting checks, and frontend build validation.
+- Automated CI for PHP 8.4 and 8.5, workbench tests, and frontend builds.
+- Deterministic Laravel workbench test environment setup in CI.
+- Release documentation for the current package state.
 
-[0.1.0]: https://github.com/xaviworks/xaviworks-modular-schema-ui/releases/tag/v0.1.0
+[0.2.2]: https://github.com/xaviworks/xaviworks-modular-schema-ui/releases/tag/v0.2.2
+[0.2.1]: https://github.com/xaviworks/xaviworks-modular-schema-ui/releases/tag/v0.2.1
